@@ -1,0 +1,13 @@
+
+*#*
+*\#*\#
+[#]*#
+*~
+*$
+*.bak
+*.py[ocd]
+
+build
+dist
+__pycache
+.DS_Store
