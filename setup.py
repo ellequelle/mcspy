@@ -1,4 +1,5 @@
 import setuptools
+from setuptools import find_packages
 
 # Load the __version__ variable without importing the package already
 exec(open('mcspy/version.py').read())

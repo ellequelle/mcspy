@@ -1,5 +1,6 @@
 __package__ = 'mcspy'
 
+import numpy as np
 from .defs import MCS_DATA_PATH
 
 
@@ -12,8 +13,8 @@ def local_data_path(pth, ext=''):
     pth = Path(addext(pth, ext))
     if pth.is_absolute():
         return str(pth)
-    if pth.parts[0] == 'DATA':
-        pth = MCS_DATA_PATH / pth
+    #if pth.parts[0] == 'DATA':
+    pth = MCS_DATA_PATH / pth
     return str(pth)
 
 

@@ -11,3 +11,4 @@ build
 dist
 __pycache
 .DS_Store
+*.egg-info

@@ -44,6 +44,10 @@ def load_mix_var(year, varname):
     fname = MCS_DATA_PATH + f'DATA/{year}/{year}_{varname}_index.npy'
     with gzip.open(fname, 'rb') as fout:
         var = np.load(fout)
+    if varname in ['date', 'datetime'] or 'date' in varname.lower():
+        var = var.astype('datetime64[ns]')
+    if varname in ['UTC']:
+        var = var.astype('timedelta64[ns]')
     print(f'loaded {fname}')
     return var
 

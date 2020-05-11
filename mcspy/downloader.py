@@ -1,5 +1,5 @@
 __package__ = 'mcspy'
-from os import makedirs
+from os import makedirs, unlink
 from os.path import dirname
 import gzip
 from ftplib import FTP
@@ -10,7 +10,8 @@ from .defs import _most_recent_known_mrom
 __all__ = ['get_tab_files', 'get_most_recent_index_http', 'get_most_recent_index_ftp']
 
 PDS_ATMOS_HOST = 'atmos.nmsu.edu'
-PDS_ROOT_URL = f'https://{PDS_ATMOS_HOST}/PDS/data'
+PDS_SERVER_PATH = '/PDS/data/'
+PDS_ROOT_URL = f'{PDS_ATMOS_HOST}{PDS_SERVER_PATH}'
 
 def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False):
     '''Given one or more product IDs (prodids), download .TAB data files from the PDS.'''
@@ -25,9 +26,9 @@ def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False):
         # make sure directory exists
         makedirs(dirname(localpath), exist_ok=True)
         if use_ftp:
-            get_tab_file_ftp(PDS_ROOT_URL + path, addext(localpath, '.gz'))
+            get_tab_file_ftp(PDS_SERVER_PATH + '/' + path, addext(localpath, '.gz'))
         else:
-            get_tab_file_http(PDS_ROOT_URL + path, addext(localpath, '.gz'))
+            get_tab_file_http(PDS_ROOT_URL + '/' + path, addext(localpath, '.gz'))
     print('Done')
 
 def ftp_login():
@@ -38,13 +39,17 @@ def ftp_login():
 
 def get_tab_file_http(server_filepath, local_filepath):
     '''Download the specified file using HTTP. '''
-    print('Downloading '+dfindex.loc[prodid, 'filename'] + '...')
-    r = get(PDS_ROOT_URL + path)
-    # check response
-    r.raise_for_status()
-    # save as gzip'ed file
-    with gzip.open(localpath + '.gz', 'w') as fout:
-        fout.write(r.content)
+    print(f'Downloading {server_filepath}...')
+    try:
+        with gzip.open(addext(local_filepath, '.gz'), 'w') as fout:
+            r = get('http://' + server_filepath)
+            # check response
+            r.raise_for_status()
+            # save as gzip'ed file
+            fout.write(r.content)
+    except Exception as e:
+        unlink(addext(local_filepath, '.gz'))
+        raise Exception from e
 
 def get_tab_file_ftp(server_filepath, local_filepath):
     '''Download the specified file using FTP. '''

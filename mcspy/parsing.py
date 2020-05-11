@@ -1,9 +1,11 @@
 import io, gzip
-from os.path import basename, isabs
+from os.path import basename, isabs, exists
 import numpy as np
 import pandas as pd
-
-from .defs import MCS_DATA_PATH, mix_keep_cols
+from .marsdate import utc2myls
+from .downloader import get_tab_files
+from .util import mcs_tab_path, add_prof_profid, add_prof_rowid
+from .defs import MCS_DATA_PATH, mix_keep_cols, header_columns, data_columns
 
 __all__ = ['parse_tab_file', 'load_tab_file']
 
@@ -19,7 +21,7 @@ def load_tab_file(prodid, dfindex, **kwargs):
             path = path+'.gz'
         else:
             # if no compressed version, try downloading
-            get_tab_file(ix, dfindex)
+            get_tab_files(prodid, dfindex)
             path = path+'.gz'
     # parse the TAB file and return two DataFrames
     return parse_tab_file(path, **kwargs)
@@ -66,8 +68,8 @@ def parse_tab_file(fn, meta=True, data=True,
     # make a datetime column with the actual UTC time
     dfmd['datetime'] = dfmd['date'] + dfmd['UTC']
     # use the datetime column to calculate the Mars Year and Ls for each retrieval
-    df = pd.DataFrame(np.transpose(utc2myls(dfmd['datetime'])),
-                     columns=['MY','cLs'], index=dfmd.index)
+    mycls = np.transpose(utc2myls(dfmd['datetime']))
+    df = pd.DataFrame(mycls, columns=['MY','cLs'], index=dfmd.index)
     dfmd = dfmd.join(df)
 
     # drop extra columns
@@ -84,6 +86,7 @@ def parse_tab_file(fn, meta=True, data=True,
         prof_num = np.tile(np.array(range(len(dfmd))), (105,1)).\
           transpose().flatten()
         dats['prof_num'] = prof_num
+        dats['prodid'] = prodid
         # make profile ID column from prof_num
         dats = add_prof_profid(dats)
         # add row ID and make it the index
