@@ -63,7 +63,7 @@ root
 |                        The corresponding detached label file.
 |
 |- [LABEL]               A directory containing the format
-|                  structure files.
+|                        structure files.
       |
       |- LABINFO.TXT     Description of files in the LABEL
       |                  directory.
