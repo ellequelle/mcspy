@@ -12,7 +12,7 @@ install_requires = [
 
 setuptools.setup(
     name="mcspy-ellequelle",
-    version=__version__,
+    version=__version__, # noqa
     author="Elle Hanson",
     author_email="elleh3113@gmail.com",
     description="",

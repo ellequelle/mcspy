@@ -16,7 +16,6 @@ __all__ = [
 
 def local_data_path(pth, ext=""):
     from pathlib import Path
-    from os.path import isabs
 
     pth = Path(addext(pth, ext))
     if pth.is_absolute():

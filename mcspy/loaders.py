@@ -4,7 +4,7 @@ import gzip
 import numpy as np
 import pandas as pd
 from .util import addext
-from .defs import MCS_DATA_PATH, mix_cols
+from .defs import MCS_DATA_PATH
 
 
 __all__ = [
