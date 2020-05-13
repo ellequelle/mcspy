@@ -1,15 +1,17 @@
 from datetime import datetime
 import numpy as np
 import pandas as pd
+
 try:
     from astropy.time import Time
+
     _useastropy = True
 except:
     _useastropy = False
 
-__all__ = ['myls2utc', 'utc2myls']
+__all__ = ["myls2utc", "utc2myls"]
 
-__doc__ = '''
+__doc__ = """
 Adapted from JavaScript version by Aymeric Spiga(?)
 https://github.com/aymeric-spiga
 http://www-mars.lmd.jussieu.fr/mars/time/martian_time.html
@@ -23,98 +25,138 @@ With the fix turned on (_FIX=True), the discrepency is down to
 RMS < 0.00071 degrees when running myls2utc(utc2myls(x)). This was
 optimized by adjusting the parameters below. Use of astropy has 
 negligible impact on the discrepency.
-'''
+"""
 
 _FIX = True
-_off2j = -0.099773362 #-0.03837437*2.6
-_off2myls = -0.065236429 #-0.03837437*1.7
+_off2j = -0.099773362  # -0.03837437*2.6
+_off2myls = -0.065236429  # -0.03837437*1.7
 _perifix = 0.003
 
+
 def myls2utc(MY, Ls):
-    #1. Get julian date
+    # 1. Get julian date
     jdate = myls2jd(MY, Ls)
     # 2. Convert to Earth Gregorian date
-    return jd2utc(jdate, scale='utc')
+    return jd2utc(jdate, scale="utc")
 
-def utc2myls(time, scale='utc'):
+
+def utc2myls(time, scale="utc"):
     jdate = utc2jd(time, scale)
     return jd2myls(jdate)
 
 
 def sol2ls(sol):
-    year_day = 668.6 # number of sols in a martian year
-    peri_day = 485.35 # perihelion date
-    e_ellip = 0.09340 # orbital ecentricity
-    timeperi = 1.90258341759902 # 2*Pi*(1-Ls(perihelion)/360) Ls(perihelion) = 250.99
-    rad2deg = 180/np.pi
+    year_day = 668.6  # number of sols in a martian year
+    peri_day = 485.35  # perihelion date
+    e_ellip = 0.09340  # orbital ecentricity
+    # 2*Pi*(1-Ls(perihelion)/360) Ls(perihelion) = 250.99
+    timeperi = 1.90258341759902
+    rad2deg = 180 / np.pi
 
-    zz,zanom,zdx = 10,10,10
+    zz, zanom, zdx = 10, 10, 10
 
     # xref: mean anomaly, zx0: eccentric anomaly, zteta: true anomaly
 
-    zz = (sol-peri_day)/year_day
-    zanom = 2*np.pi*(zz-np.round(zz))
+    zz = (sol - peri_day) / year_day
+    zanom = 2 * np.pi * (zz - np.round(zz))
     xref = np.abs(zanom)
 
     # Solve Kepler equation zx0 - e *sin(zx0) = xref
     # Using Newton iterations
-    zx0 = xref+e_ellip*np.sin(xref)
+    zx0 = xref + e_ellip * np.sin(xref)
     if isscalar(sol):
         while np.abs(zdx) >= 1e-9:
-            zdx = -(zx0-e_ellip*np.sin(zx0)-xref)/(1.-e_ellip*np.cos(zx0))
-            zx0 = zx0+zdx
+            zdx = -(zx0 - e_ellip * np.sin(zx0) - xref) / (
+                1.0 - e_ellip * np.cos(zx0)
+            )
+            zx0 = zx0 + zdx
     else:
         lx = np.abs(zdx) >= 1e-9
         while np.any(lx):
-            zdx = -(zx0-e_ellip*np.sin(zx0)-xref)/(1.-e_ellip*np.cos(zx0))
-            zx0 = zx0+zdx
+            zdx = -(zx0 - e_ellip * np.sin(zx0) - xref) / (
+                1.0 - e_ellip * np.cos(zx0)
+            )
+            zx0 = zx0 + zdx
             lx = np.abs(zdx) >= 1e-9
-    lx = zanom<0
+    lx = zanom < 0
     if np.any(lx):
         zx0 = np.where(lx, -zx0, zx0)
 
     # Compute true anomaly zteta, now that eccentric anomaly zx0 is known
-    zteta = 2*np.arctan(np.sqrt((1.+e_ellip)/(1.-e_ellip))*np.tan(zx0/2.))
+    zteta = 2 * np.arctan(
+        np.sqrt((1.0 + e_ellip) / (1.0 - e_ellip)) * np.tan(zx0 / 2.0)
+    )
 
     # compute Ls
-    Ls = zteta-timeperi
-    Ls = np.where(Ls < 0, Ls+2*np.pi, Ls)
-    Ls = np.where(Ls > 2*np.pi, Ls-2*np.pi, Ls)
-    #if Ls < 0:
+    Ls = zteta - timeperi
+    Ls = np.where(Ls < 0, Ls + 2 * np.pi, Ls)
+    Ls = np.where(Ls > 2 * np.pi, Ls - 2 * np.pi, Ls)
+    # if Ls < 0:
     #    Ls = Ls + 2*np.pi
-    #if Ls > 2*np.pi:
+    # if Ls > 2*np.pi:
     #    Ls = Ls - 2*np.pi
 
     # convert Ls into degrees
-    Ls = rad2deg*Ls
+    Ls = rad2deg * Ls
 
     return Ls
 
 
-def utc2jd(time, scale='utc'):
-    '''
+def utc2jd(time, scale="utc"):
+    """
     Only works with arrays if using astropy.
-    '''
+    """
     if _useastropy:
         try:
             return Time(time, scale=scale).jd
         except:
             if isinstance(time, tuple):
-                return Time(dict(zip(('year','month','day','hour','minute','second'), time)),
-                            format='ymdhms', scale=scale).jd
+                return Time(
+                    dict(
+                        zip(
+                            (
+                                "year",
+                                "month",
+                                "day",
+                                "hour",
+                                "minute",
+                                "second",
+                            ),
+                            time,
+                        )
+                    ),
+                    format="ymdhms",
+                    scale=scale,
+                ).jd
             else:
                 return Time(pd.to_datetime(time), scale=scale).jd
 
-    if (isinstance(time, tuple) or isinstance(time, list)
-            or isinstance(time, np.ndarray)):
-        d = dict(zip(('year', 'month', 'day', 'hour', 'minute', 'second', 'microsecond'), time))
-        if 'second' in d:
-            if not d['second'].is_integer():
-                d['microsecond'] = d['second']/1e6
-                d['second'] = int(d['second'])
-        d = {k:int(v) for k,v in d.items() if k != 'microsecond'}
+    if (
+        isinstance(time, tuple)
+        or isinstance(time, list)
+        or isinstance(time, np.ndarray)
+    ):
+        d = dict(
+            zip(
+                (
+                    "year",
+                    "month",
+                    "day",
+                    "hour",
+                    "minute",
+                    "second",
+                    "microsecond",
+                ),
+                time,
+            )
+        )
+        if "second" in d:
+            if not d["second"].is_integer():
+                d["microsecond"] = d["second"] / 1e6
+                d["second"] = int(d["second"])
+        d = {k: int(v) for k, v in d.items() if k != "microsecond"}
         time = datetime(**d)
-    
+
     jdate = pd.to_datetime(time).to_julian_date()
 
     return jdate
@@ -122,12 +164,12 @@ def utc2jd(time, scale='utc'):
 
 def jd2myls(jdate):
     # Convert a Julian date to corresponding "sol" and "Ls"
-    jdate_ref = 2.442765667e6 # 19/12/1975 4:00:00, such that Ls=0
+    jdate_ref = 2.442765667e6  # 19/12/1975 4:00:00, such that Ls=0
     # jdate_ref is also the begining of Martian Year "12"
     MY_ref = 12
     earthday = 86400
     marsday = 88775.245
-    marsyear = 668.60 # number of sols in a martian year 
+    marsyear = 668.60  # number of sols in a martian year
 
     jdate = _tovec(jdate)
 
@@ -135,8 +177,7 @@ def jd2myls(jdate):
     if _FIX:
         jdate = jdate - _off2myls
 
-
-    '''
+    """
     # calculations from GISS mars24 docs
     # https://www.giss.nasa.gov/tools/mars24/help/algorithm.html
     ## j2000 date
@@ -173,98 +214,103 @@ def jd2myls(jdate):
     #TST = MST + EOT/15 # true solar time
     #LTST = LMST + EOT/15 # local true solar time
     #subsolar_lon = MST*15 + EOT + 180 # subsolar longitude
-    '''
+    """
 
     ## Start by converting given date to Julian date
-    #jdate = utc2jd()
+    # jdate = utc2jd()
 
-    sol = (jdate-jdate_ref)*earthday/marsday
+    sol = (jdate - jdate_ref) * earthday / marsday
 
     MY = MY_ref
     # Compute Martian Year #, along with sol value
     # sol being computed modulo the number of sols in a martian year
     if isscalar(jdate):
         while sol >= marsyear:
-            sol = sol-marsyear
-            MY = MY+1
+            sol = sol - marsyear
+            MY = MY + 1
         while sol < 0.0:
-            sol = sol+marsyear
-            MY = MY-1
+            sol = sol + marsyear
+            MY = MY - 1
     else:
         lx = sol >= marsyear
-        while np.any(lx): #sol >= marsyear:
-            sol = np.where(lx, sol-marsyear, sol)
-            MY = np.where(lx, MY+1, MY)
+        while np.any(lx):  # sol >= marsyear:
+            sol = np.where(lx, sol - marsyear, sol)
+            MY = np.where(lx, MY + 1, MY)
             lx = sol >= marsyear
         lx = sol < 0.0
-        while np.any(lx): #sol < 0.0:
-            sol = np.where(lx, sol+marsyear, sol)
-            MY = np.where(lx, MY-1, MY)
+        while np.any(lx):  # sol < 0.0:
+            sol = np.where(lx, sol + marsyear, sol)
+            MY = np.where(lx, MY - 1, MY)
             lx = sol < 0.0
 
     # convert sol number to Ls
-    #sols_per_MY = 668.6 # number of sols in a martian year
-    #Ls = sol/sols_per_MY*360
+    # sols_per_MY = 668.6 # number of sols in a martian year
+    # Ls = sol/sols_per_MY*360
     Ls = sol2ls(sol)
 
     return MY, Ls
 
-def myls2jd(MY, Ls, return_type='float'):
-    '''The argument return_type only matters if using astropy.'''
-    _rta = ['float', 'astropy']
+
+def myls2jd(MY, Ls, return_type="float"):
+    """The argument return_type only matters if using astropy."""
+    _rta = ["float", "astropy"]
     if return_type.lower() not in _rta:
-        ValueError(f'return_type can be one of {_rta}.')
-    
+        ValueError(f"return_type can be one of {_rta}.")
+
     MY, Ls = _tovec(MY, Ls)
 
-    sols_per_MY = 668.6 # number of sols in a martian year
-    sec_per_sol = 88775.245 # sol length, in seconds
-    sec_per_day = 86400 # Earth day length, in seconds
-    #day_per_year = 365.2422 # number of earth days in an earth year
+    sols_per_MY = 668.6  # number of sols in a martian year
+    sec_per_sol = 88775.245  # sol length, in seconds
+    sec_per_day = 86400  # Earth day length, in seconds
+    # day_per_year = 365.2422 # number of earth days in an earth year
     ref_MY = 26
-    ref_jdate = 2452383.23 # Julian date for April 18.7 2002, Ls = 0, beginning of Mars Year 26
+    ref_jdate = 2452383.23  # Julian date for April 18.7 2002, Ls = 0, beginning of Mars Year 26
 
     # 1. Find julian date for the (beginning of) chose Mars Year
-    jdate = (MY-ref_MY)*(sols_per_MY*(sec_per_sol/sec_per_day))+ref_jdate
+    jdate = (MY - ref_MY) * (
+        sols_per_MY * (sec_per_sol / sec_per_day)
+    ) + ref_jdate
 
     # 2. Find the number of martian sols corresponding to sought Solar Longitude
-    #sol = Ls/360*sols_per_MY
+    # sol = Ls/360*sols_per_MY
     sol = ls2sol(Ls)
-    
 
     # small fix for Ls = 0, we get sol = 668.59987 instead of sol~0
-    #lx = sol >= 668.59
-    #if np.any(lx):
+    # lx = sol >= 668.59
+    # if np.any(lx):
     #    sol = np.where(lx, sol + 0.01 - sols_per_MY, sol)
     #    #sol[lx] = sol[lx] + 0.01 - sols_per_MY
 
-    #3. Add up these sols to get julian date
-    jdate = jdate+sol*(sec_per_sol/sec_per_day)
-    
+    # 3. Add up these sols to get julian date
+    jdate = jdate + sol * (sec_per_sol / sec_per_day)
+
     # try shifting so error is centered on zero
     if _FIX:
         jdate = jdate - _off2j
 
-    if return_type == 'astropy':
+    if return_type == "astropy":
         if not _useastropy:
-            raise ValueError('Astropy is not available')
-        return Time(jdate, format='jd', scale='utc')
+            raise ValueError("Astropy is not available")
+        return Time(jdate, format="jd", scale="utc")
 
     return jdate
 
+
 def ls2sol(Ls):
-    sols_per_MY = 668.6 # number of sols in a martian year
-    peri_day = 485.35 # perihelion date (in sols)
-    e_ellip = 0.09340 # orbital ecentricity
-    peri_day = 485.35 # perihelion date (in sols)
-    timeperi = 1.90258341759902 # 2*Pi*(1-Ls(perihelion)/360) Ls(perihelion) = 250.99
-    rad2deg = 180/np.pi
+    sols_per_MY = 668.6  # number of sols in a martian year
+    peri_day = 485.35  # perihelion date (in sols)
+    e_ellip = 0.09340  # orbital ecentricity
+    peri_day = 485.35  # perihelion date (in sols)
+    timeperi = 1.90258341759902  # 2*Pi*(1-Ls(perihelion)/360) Ls(perihelion) = 250.99
+    rad2deg = 180 / np.pi
 
-    zteta = np.array(Ls)/rad2deg+timeperi # true anomaly
-    zx0 = 2.0*np.arctan(np.tan(0.5*zteta)/np.sqrt((1.+e_ellip)/(1.-e_ellip))) # eccentric anomaly
-    xref = zx0-e_ellip*np.sin(zx0) # xref: mean anomaly
+    zteta = np.array(Ls) / rad2deg + timeperi  # true anomaly
+    zx0 = 2.0 * np.arctan(
+        np.tan(0.5 * zteta) / np.sqrt((1.0 + e_ellip) / (1.0 - e_ellip))
+    )  # eccentric anomaly
+    xref = zx0 - e_ellip * np.sin(zx0)  # xref: mean anomaly
 
-    sol = (xref/(2.*np.pi))*sols_per_MY+peri_day
+    sol = (xref / (2.0 * np.pi)) * sols_per_MY + peri_day
 
     # small fix for Ls = 0, we get sol = 668.59987 instead of sol~0
     lx = sol >= 668.59
@@ -273,88 +319,96 @@ def ls2sol(Ls):
             sol = np.where(lx, sol + _perifix - sols_per_MY, sol)
         else:
             sol = np.where(lx, sol + 0.01 - sols_per_MY, sol)
-        #sol[lx] = sol[lx] + 0.01 - sols_per_MY
+        # sol[lx] = sol[lx] + 0.01 - sols_per_MY
 
     return sol
 
 
-def jd2utc(jdate, scale='utc'):
+def jd2utc(jdate, scale="utc"):
     if _useastropy:
-        return Time(jdate, format='jd', scale=scale).ymdhms
+        return Time(jdate, format="jd", scale=scale).ymdhms
 
     # convert julian date to gregorian date
-    ijj = np.floor(jdate+0.5)
-    iss = np.floor((4*ijj-6884477)/146097)
-    ir3 = ijj-np.floor((146097*iss+6884480)/4)
-    iap = np.floor((4*ir3+3)/1461)
-    ir2 = ir3-np.floor(1461*iap/4)
-    imp = np.floor((5*ir2+461)/153)
-    ir1 = ir2-np.floor((153*imp-457)/5)
-    ij = ir1+1
+    ijj = np.floor(jdate + 0.5)
+    iss = np.floor((4 * ijj - 6884477) / 146097)
+    ir3 = ijj - np.floor((146097 * iss + 6884480) / 4)
+    iap = np.floor((4 * ir3 + 3) / 1461)
+    ir2 = ir3 - np.floor(1461 * iap / 4)
+    imp = np.floor((5 * ir2 + 461) / 153)
+    ir1 = ir2 - np.floor((153 * imp - 457) / 5)
+    ij = ir1 + 1
 
-    #if imp >= 13:
+    # if imp >= 13:
     #    imp = imp-12
     #    iap = iap+1
-    iap = np.where(imp>=13, iap+1, iap)
-    imp = np.where(imp>=13, imp-12, imp)
+    iap = np.where(imp >= 13, iap + 1, iap)
+    imp = np.where(imp >= 13, imp - 12, imp)
 
-    year = iap+100*iss
+    year = iap + 100 * iss
     month = imp
     day = ij
 
     try:
         from logging import warning
-        warning('Values for hour, minute, and second are untested.')
+
+        warning("Values for hour, minute, and second are untested.")
     except:
         pass
     # experimental, untested
-    rr = (jdate-ijj)*24+12
+    rr = (jdate - ijj) * 24 + 12
     hour = np.floor(rr)
-    mm = (rr-hour)*60
+    mm = (rr - hour) * 60
     minute = np.floor(mm)
-    second = (mm-minute)*60
+    second = (mm - minute) * 60
 
-    return year,month,day, hour,minute,second
-
+    return year, month, day, hour, minute, second
 
 
 def _test_myls_utc(nt=500, plot=True, seed=None):
-    myls2ls = lambda x: (np.array(x)*[[360],[1]]).sum(axis=0)
-    tests = np.stack((np.random.randint(0,45,nt), np.random.random(nt)*360), axis=0)
+    myls2ls = lambda x: (np.array(x) * [[360], [1]]).sum(axis=0)
+    tests = np.stack(
+        (np.random.randint(0, 45, nt), np.random.random(nt) * 360),
+        axis=0,
+    )
     if _useastropy:
         utc = myls2utc(*tests)
         results = np.array(utc2myls(utc))
     else:
         utc = myls2utc(*tests)
-        results = np.array([utc2myls(j) for j in np.transpose(utc)]).transpose()
+        results = np.array(
+            [utc2myls(j) for j in np.transpose(utc)]
+        ).transpose()
     diffs = myls2ls(results - tests)
-    diffs[diffs>5] = diffs[diffs>5]-360
-    diffs[diffs<-5] = 360+diffs[diffs<-5]
+    diffs[diffs > 5] = diffs[diffs > 5] - 360
+    diffs[diffs < -5] = 360 + diffs[diffs < -5]
     if plot:
         from matplotlib import pyplot as plt
-        plt.scatter(tests[1,:], tests[0,:], c=diffs, marker='.')
-        plt.colorbar(label='$\Delta$L$_s$')
-        plt.xlabel('L$_s$')
-        plt.ylabel('MY')
+
+        plt.scatter(tests[1, :], tests[0, :], c=diffs, marker=".")
+        plt.colorbar(label="$\Delta$L$_s$")
+        plt.xlabel("L$_s$")
+        plt.ylabel("MY")
 
         plt.figure()
-        plt.scatter(tests[1,:], diffs, c=tests[0,:], marker='.')
-        plt.colorbar(label='MY')
-        plt.xlabel('L$_s$')
-        plt.ylabel('$\Delta$L$_s$')
+        plt.scatter(tests[1, :], diffs, c=tests[0, :], marker=".")
+        plt.colorbar(label="MY")
+        plt.xlabel("L$_s$")
+        plt.ylabel("$\Delta$L$_s$")
         plt.show()
 
     return tests, utc, diffs, results
 
 
 def isscalar(x):
-    return not hasattr(x, '__len__')
+    return not hasattr(x, "__len__")
+
 
 def _tovec(*args):
     def doit(x):
         if isscalar(x) or not isinstance(x, np.ndarray):
             return np.array(x)
         return x
+
     if len(args) == 1:
         return doit(args[0])
     args = list(args)
@@ -362,58 +416,76 @@ def _tovec(*args):
         args[ix] = doit(args[ix])
     return tuple(args)
 
-def load_leapsec(date=None, index='date'):
+
+def load_leapsec(date=None, index="date"):
     import io
+
     def format_lstable(lines):
         import re
+
         lls = []
         for ll in lines:
             try:
                 ll = ll.strip()
-                lls.append(re.sub(r'(\d+)\s+(\d+)\s+(\d{4})',
-                           lambda x:'{}-{}-{}'.format(*x.groups()), ll))
+                lls.append(
+                    re.sub(
+                        r"(\d+)\s+(\d+)\s+(\d{4})",
+                        lambda x: "{}-{}-{}".format(*x.groups()),
+                        ll,
+                    )
+                )
             except:
                 lls.append(ll)
-        return '\n'.join(lls)
+        return "\n".join(lls)
 
     def check_expired(lines, date):
         try:
             for ll in lines:
-                if 'expire' in ll:
+                if "expire" in ll:
                     break
-            ix = ll.index('on')+3
+            ix = ll.index("on") + 3
             texp = pd.to_datetime(ll[ix:])
             if texp < datetime.now() or texp < date:
                 import requests
-                lsurl = 'https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat'
-                print('Leapsecond table is outdated, attempting to fetch new table...')
+
+                lsurl = "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat"
+                print(
+                    "Leapsecond table is outdated, attempting to fetch new table..."
+                )
                 print(lsurl)
                 req = requests.get(lsurl)
-                lines = req.text.split('\n')
+                lines = req.text.split("\n")
         except Exception as e:
-            print('Error: '+str(e))
+            print("Error: " + str(e))
         return lines
 
     if date is None:
         date = datetime.now()
     else:
         date = pd.to_datetime(date)
-    lines = check_expired(leapsec.split('\n'), date)
+    lines = check_expired(leapsec.split("\n"), date)
     lines = format_lstable(lines)
     buf = io.StringIO(lines)
-    df = pd.read_table(buf, skiprows=14, header=None,
-            names=['MJD', 'date', 'tai_utc'], sep='\s+', infer_datetime_format=True)
+    df = pd.read_table(
+        buf,
+        skiprows=14,
+        header=None,
+        names=["MJD", "date", "tai_utc"],
+        sep="\s+",
+        infer_datetime_format=True,
+    )
     buf.close()
 
-    df['date'] = pd.to_datetime(df['date'], dayfirst=True)
+    df["date"] = pd.to_datetime(df["date"], dayfirst=True)
     df = df.set_index(index)
     try:
-        return df.reindex(pd.to_datetime(date), method='ffill')
+        return df.reindex(pd.to_datetime(date), method="ffill")
     except:
         pass
-    return df.reindex(pd.to_datetime([date]), method='ffill')
+    return df.reindex(pd.to_datetime([date]), method="ffill")
 
-leapsec = '''#  Value of TAI-UTC in second valid beetween the initial value until
+
+leapsec = """#  Value of TAI-UTC in second valid beetween the initial value until
 #  the epoch given on the next line. The last line reads that NO
 #  leap second was introduced since the corresponding date 
 #  Updated through IERS Bulletin 59 issued in January 2020
@@ -454,4 +526,4 @@ leapsec = '''#  Value of TAI-UTC in second valid beetween the initial value unti
 56109.0    1  7 2012       35
 57204.0    1  7 2015       36
 57754.0    1  1 2017       37
-'''
+"""
