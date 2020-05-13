@@ -74,7 +74,7 @@ def get_tab_file_ftp(server_filepath, local_filepath):
             ftp.retrbinary("RETR {server_filepath}", fout.write)
 
 
-def get_most_recent_index_ftp(local_filepath="CUMINDEX.TAB.gz"):
+def get_most_recent_index_ftp(local_filepath="DATA/CUMINDEX.TAB.gz"):
     """Find and download the most recent CUMINDEX.TAB file using FTP."""
     with ftp_login() as ftp:
         mromlist = ftp.nlst("/PDS/data/MROM_2*")

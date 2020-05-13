@@ -81,12 +81,12 @@ def reload_index(download=False, allow_download=True):
         "stop_orbit_number": "int64",
     }
     # download index file if not found
-    if not exists(MCS_DATA_PATH + "CUMINDEX.TAB.gz") or download:
-        if exists(MCS_DATA_PATH + "CUMINDEX.TAB") and not download:
+    if not exists(MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz") or download:
+        if exists(MCS_DATA_PATH + "DATA/CUMINDEX.TAB") and not download:
             # if uncompressed version, compress it
-            with open(MCS_DATA_PATH + "CUMINDEX.TAB", "r") as fin:
+            with open(MCS_DATA_PATH + "DATA/CUMINDEX.TAB", "r") as fin:
                 with gzip.open(
-                    MCS_DATA_PATH + "CUMINDEX.TAB.gz", "w"
+                    MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz", "w"
                 ) as fout:
                     fout.write(fin.read())
         else:
@@ -102,15 +102,15 @@ def reload_index(download=False, allow_download=True):
             # if cumulative index is not found, download it from pds
             try:  # with ftp it's easy to find the most recent index
                 get_most_recent_index_ftp(
-                    MCS_DATA_PATH + "CUMINDEX.TAB.gz"
+                    MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz"
                 )
             except Exception:  # fall back on http if ftp doesn't work
                 get_most_recent_index_http(
-                    MCS_DATA_PATH + "CUMINDEX.TAB.gz"
+                    MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz"
                 )
     # read index file into pandas DataFrame
     dfindex = pd.read_csv(
-        MCS_DATA_PATH + "CUMINDEX.TAB.gz",
+        MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz",
         header=None,
         dtype=dftypes,
         parse_dates=["start_time", "stop_time"],
