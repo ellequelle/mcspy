@@ -31,48 +31,48 @@ root
 |     |
 |    ...
 |- [INDEX]               A directory containing indices of data
-            |     |                  products in this data product set.
-            |     |
-            |     |- INDXINFO.TXT    A description of files in the INDEX
-            |     |                  directory.
-            |     |
-            |     |- INDEX.TAB       An index of data files on this volume.
-            |     |
-            |     |- INDEX.LBL       The detached PDS label for INDEX.TAB.
-            |     |
-            |     |- CUMINDEX.TAB    An index of all the data files on this
-            |     |                  archive volume set, including those on
-            |     |                  this volume.
-            |     |
-            |     |- CUMINDEX.LBL    The detached PDS label for CUMINDEX.TAB.
-            |
-            |- [DATA]                A directory containing the data files
-            |     |                  and PDS labels describing the contents
-            |     |                  of those files.
-            |     |
-            |     - [2006]           The year of this archive volume.
-            |         |
-            |         - [06]         The month of this archive volume.
-            |            |
-            |            - [DD]      A series of subdirectories organized by
-            |               |        day of month.
-            |               |
-            |               - YYYYMMDDHH_RDR.TAB
-            |               |        A four hour MCS RDR data product file.
-            |               |
-            |               - YYYYMMDDHH_RDR.LBL
-            |                        The corresponding detached label file.
-            |
-            |- [LABEL]               A directory containing the format
-            |                  structure files.
-                  |
-                  |- LABINFO.TXT     Description of files in the LABEL
-                  |                  directory.
-                  |
-                  |- MCS_DDR1.FMT     A format file describing the columns
-                  |                   in record 1 of MCS DDR data product tables.
-                  |
-                  |- MCS_DDR2.FMT     A format file describing the columns
+|     |                  products in this data product set.
+|     |
+|     |- INDXINFO.TXT    A description of files in the INDEX
+|     |                  directory.
+|     |
+|     |- INDEX.TAB       An index of data files on this volume.
+|     |
+|     |- INDEX.LBL       The detached PDS label for INDEX.TAB.
+|     |
+|     |- CUMINDEX.TAB    An index of all the data files on this
+|     |                  archive volume set, including those on
+|     |                  this volume.
+|     |
+|     |- CUMINDEX.LBL    The detached PDS label for CUMINDEX.TAB.
+|
+|- [DATA]                A directory containing the data files
+|     |                  and PDS labels describing the contents
+|     |                  of those files.
+|     |
+|     - [2006]           The year of this archive volume.
+|         |
+|         - [06]         The month of this archive volume.
+|            |
+|            - [DD]      A series of subdirectories organized by
+|               |        day of month.
+|               |
+|               - YYYYMMDDHH_RDR.TAB
+|               |        A four hour MCS RDR data product file.
+|               |
+|               - YYYYMMDDHH_RDR.LBL
+|                        The corresponding detached label file.
+|
+|- [LABEL]               A directory containing the format
+|                  structure files.
+      |
+      |- LABINFO.TXT     Description of files in the LABEL
+      |                  directory.
+      |
+      |- MCS_DDR1.FMT     A format file describing the columns
+      |                   in record 1 of MCS DDR data product tables.
+      |
+      |- MCS_DDR2.FMT     A format file describing the columns
                                       in record 2 of MCS DDR data product tables. 
 			
 ```
