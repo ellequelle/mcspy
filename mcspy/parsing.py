@@ -5,7 +5,9 @@ import pandas as pd
 from .marsdate import utc2myls
 from .downloader import get_tab_files
 from .util import mcs_tab_path, add_prof_profid, add_prof_rowid
-from .defs import MCS_DATA_PATH, mix_keep_cols, header_columns, data_columns
+from .defs import (MCS_DATA_PATH, mix_keep_cols, header_columns,
+    data_columns, mix_use_cols, mix_tab_dtypes, mix_date_col_lookup,
+    mix_qual_cols, mix_data_cols, mix_date_cols, mix_time_cols)
 
 __all__ = ['parse_tab_file', 'load_tab_file']
 
@@ -41,10 +43,24 @@ def parse_tab_file(fn, meta=True, data=True,
     # product ID (prodid) is the name of the TAB file
     prodid = basename(fn.replace('.gz',''))
 
+    mdl = {}
+    for k,(a,b) in mix_date_col_lookup.items():
+        if a in mix_use_cols and b in mix_use_cols:
+            mdl[k] = [a,b]
+
     # read "header" lines into a DataFrame
     dfmd = pd.read_csv(io.StringIO('\n'.join(mdlines)), 
-        header=None, names=header_columns,
-        na_values=[-9999,-9999.0]).iloc[:, :47]
+        header=None, names=header_columns, 
+        dtype=mix_tab_dtypes, cache_dates=True,
+        infer_datetime_format=True, parse_dates=True,
+        na_values=['-9999'],
+        comment='#')#.replace(-9999,np.nan)
+    '''
+    # replace nans in any date columns with NaT
+    for k in mix_date_cols + mix_time_cols:
+        if k in dfmd:
+            dfmd[k].replace(np.nan, pd.NaT)
+    '''
 
     # make product ID column
     dfmd['prodid'] = prodid
@@ -53,7 +69,11 @@ def parse_tab_file(fn, meta=True, data=True,
     dfmd = dfmd.set_index('profid')
 
     # find retrievals that are marked as "bad"
-    lx = dfmd['1'].astype(bool) # indicates bad retrievals
+    lx = (dfmd['1'].astype(bool)
+        | ((dfmd['Gqual'] != 0)
+                & (dfmd['Gqual'] != 6))) # indicates bad retrievals
+    # store number of retrievals in file before removing bad ones
+    nlen = len(lx)
     # get profile IDs of "bad" retrievals
     badprofids = dfmd[lx].index
     # remove bad rows from the metadata index dataframe
@@ -83,8 +103,10 @@ def parse_tab_file(fn, meta=True, data=True,
                              names=data_columns, na_values=-9999.0)
 
         # add a column with the profile number (number from the top of the file)
-        prof_num = np.tile(np.array(range(len(dfmd))), (105,1)).\
+        prof_num = np.tile(np.array(range(nlen)), (105,1)).\
           transpose().flatten()
+        # this file has two bad profiles
+        # 2006121500_DDR.TAB 4348 (34230, 15) (34020,)
         dats['prof_num'] = prof_num
         dats['prodid'] = prodid
         # make profile ID column from prof_num

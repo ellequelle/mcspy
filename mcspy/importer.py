@@ -1,6 +1,7 @@
 __package__ = 'mcspy'
 import gzip
-from os.path import exists
+from os import makedirs
+from os.path import exists, dirname
 import numpy as np
 import pandas as pd
 from .loaders import load_mix_var, load_prof_var, load_mix_dframe
@@ -12,32 +13,36 @@ __all__ = ['collect_yearly_vars', ]
 _others = ['save_prof_var', '_append_mix_dframe', 'save_mix_dframe', 'save_mix_var', 'save_prof_df', '_append_prof_var', '_append_mix_var', '_append_prof_df']
 
 def save_prof_var(var, year, varname):
-    '''Writes the profile data variable `varname` from `year`, passed in the numpy array `var` to the numpy array file "{year}/{year}_{varname}_profiles.npy".'''
-    fname = local_data_path(f'DATA/{year}/{year}_{varname}_profiles.npy')
+    '''Writes the profile data variable `varname` from `year`, passed in the numpy array `var` to the numpy array file "{year}/profdata/{year}_{varname}_profiles.npy".'''
+    fname = local_data_path(f'DATA/{year}/profdata/{year}_{varname}_profiles.npy')
+    if not exists(dirname(fname)):
+        makedirs(dirname(fname))
     with gzip.open(fname, 'wb') as fout:
         np.save(fout, var, False)
     print(f'wrote {fname}')
 
 def _append_mix_dframe(mix):
     '''Append new rows onto an existing saved metadata index DataFrame.'''
-    year = mix['date'].dt.year.unique()
+    year = mix['datetime'].dt.year.unique()
     if year.size > 1:
         raise ValueError('append_mix_drame only works for data from a single year')
     year = year[0]
     df = pd.DataFrame()
-    #_append_mix_dfvars(mix) # save as individual arrays
-    fn = local_data_path(f'DATA/{year}/{year}_mixvars')
-    if exists(addext(fn, '.npy')) and exists(addext(fn, '.csv.gz')):
+    _append_mix_dfvars(mix) # save as individual arrays
+    fn = local_data_path(f'DATA/{year}/indexdata/{year}_mixvars')
+    if exists(addext(fn, '.npz')) and exists(addext(fn, '.csv.gz')):
         df = load_mix_dframe(year)
     else:
         df = pd.DataFrame()
     save_mix_dframe(df.append(mix, verify_integrity=True))
 
 def save_mix_var(var, year, varname):
-    '''Writes a metadata index variable for `varname` from `year` as a numpy array to the numpy array file "{year}/{year}_{varname}_index.npy".'''
-    fname = local_data_path(f'DATA/{year}/{year}_{varname}_index.npy')
-    if varname in ['date', 'UTC', 'datetime']:
+    '''Writes a metadata index variable for `varname` from `year` as a numpy array to the numpy array file "{year}/indexdata/{year}_{varname}_index.npy".'''
+    fname = local_data_path(f'DATA/{year}/indexdata/{year}_{varname}_index.npy')
+    if varname in ['datetime']:
         var = var.astype(int)
+    if not exists(dirname(fname)):
+        makedirs(dirname(fname))
     with gzip.open(fname, 'wb') as fout:
         np.save(fout, var, False)
     print(f'wrote {fname}')
@@ -47,7 +52,7 @@ def save_mix_dframe(mix):
     mix = mix.copy()
     mix = mix.reset_index()
     year = mix['profid'].str.slice(None, 4).iloc[0]
-    fn = local_data_path(f'DATA/{year}/{year}_mixvars')
+    fn = local_data_path(f'DATA/{year}/indexdata/{year}_mixvars')
     # drop product ID
     if 'prodid' in mix:
         mix = mix.drop(columns=['prodid'])
@@ -56,13 +61,13 @@ def save_mix_dframe(mix):
     mix.pop('profid').to_csv(fname, index=None, header=True)
     print(f'saved {fname}')
     # interpret datetime columns as 64-bit integers
-    for cc in ['date', 'UTC', 'datetime']:
-        mix[cc] = mix[cc].astype(int)
-    fname = addext(fn, '.npy')
     # save numeric data columns as a 2-D numpy array
-    np.save(fname, mix[mix_cols].values, False)
+    for cc in ['datetime']:
+        mix[cc] = mix[cc].astype(int)
+    np.savez_compressed(fn, **{n:mix[n].to_numpy() for n in mix.columns})
+    #fname = addext(fn, '.npy')
+    #np.save(fname, mix[mix_cols].values, False)
     print(f'saved {fname}, {mix.shape}')
-
 
 def save_prof_df(dfprof):
     year = dfprof['profid'].str.slice(None, 4).iloc[0]
@@ -72,17 +77,16 @@ def save_prof_df(dfprof):
 
 def _append_prof_var(var, year, varname):
     '''Append profile data passed in `var` for the variable `varname` and year `year` to a numpy array file. If the file does not exist, create it.'''
-    dat = var.reshape((105,-1))
-    fname = local_data_path(f'DATA/{year}/{year}_{varname}_profiles.npy')
+    dat = var.reshape((-1,105))
+    fname = local_data_path(f'DATA/{year}/profdata/{year}_{varname}_profiles.npy')
     # check whether file exists
     if not exists(fname):
         save_prof_var(var, year, varname)
     else:
         # concatenate new and existing data arrays
-        oldvar = load_prof_var(year, varname)
+        oldvar = load_prof_var(year, varname).flatten()
         print(oldvar.shape, dat.shape)
-        print(oldvar, dat)
-        oldvar = np.hstack((oldvar, dat))
+        oldvar = np.hstack((oldvar.flatten(), dat.flatten()))
         # save concatenated arrays to the file
         save_prof_var(oldvar, year, varname)
         print(f'prof {varname}, {year}, {oldvar.shape}')
@@ -90,7 +94,7 @@ def _append_prof_var(var, year, varname):
 def _append_mix_var(var, year, varname):
     '''Append metadata data passed in `var` for the metadata variable `varname` and year `year` to a numpy array file. If the file does not exist, create it.'''
     dat = var
-    fname = local_data_path(f'DATA/{year}/{year}_{varname}_index.npy')
+    fname = local_data_path(f'DATA/{year}/indexdata/{year}_{varname}_index.npy')
     # check whether file exists
     if not exists(fname):
         save_mix_var(var, year, varname)
@@ -103,7 +107,7 @@ def _append_mix_var(var, year, varname):
         print(f'mix {varname}, {year}, {oldvar.shape}')
 
 def _append_mix_dfvars(df):
-    year = df['date'].dt.year.unique()
+    year = df['datetime'].dt.year.unique()
     year = year[0]
     for vv in mix_cols:
         if vv in df:
@@ -129,7 +133,7 @@ def _shrink_df(df):
             df_[vv] = pd.to_numeric(df_[vv], downcast='float')
     return df_
 
-def collect_yearly_vars(dfindex):
+def collect_yearly_vars(dfindex, MIX=True, PROF=True):
     '''Read the MCS TAB data files and save the metadata and profile data to binary files to be easily read in the future.
     This function creates yearly .npy array files with each file containing the data for one variable for the whole year. If TAB files are not found locally, it will attempt to download them from the PDS. 
 
@@ -139,16 +143,29 @@ This appends TAB files onto any data in already existing .npy or .csv.gz files, 
     ----------
     dfindex : DataFrame from the PDS index file loaded by `reload_index`. 
     '''
-    ymms = (dfindex.start_time.dt.year*100
-                + dfindex.start_time.dt.month).unique()
+    # read max 10 days at a time between saves
+    # loading files gets slower as the dataframes increase in size
+    ymms = (dfindex.start_time.dt.year*1000
+                + dfindex.start_time.dt.month*10
+                + dfindex.start_time.dt.day//10).unique()
     for ym in ymms:
         dfi = dfindex.loc[dfindex.index.str.startswith(ym.astype(str))]
-        dfmix = pd.DataFrame()
-        dfprof = pd.DataFrame()
+        if MIX:
+            dfmix = pd.DataFrame()
+        if PROF:
+            dfprof = pd.DataFrame()
         for prodid in dfi.index:
             dfm, dfp = load_tab_file(prodid, dfindex)
-            dfmix = dfmix.append(_shrink_df(dfm), verify_integrity=True)
-            dfprof = dfprof.append(_shrink_df(dfp), verify_integrity=True)
-            #print(prodid, dfmix.index.nunique(), dfprof.profid.nunique())
-        _append_mix_dframe(dfmix)
-        _append_prof_df(dfprof)
+            xpt = [prodid]
+            if MIX:
+                dfmix = dfmix.append(_shrink_df(dfm), verify_integrity=True)
+                xpt += [dfmix.index.nunique()]
+            if PROF:
+                dfprof = dfprof.append(_shrink_df(dfp),
+                                verify_integrity=True)
+                xpt += [dfprof.index.nunique()]
+            print(*xpt)
+        if MIX:
+            _append_mix_dframe(dfmix)
+        if PROF:
+            _append_prof_df(dfprof)
