@@ -19,8 +19,7 @@ root
 |                        both humans and computers.
 |
 |- [CALIB]               A directory containing calibration
-|
-|                  information about this data set.
+|                       information about this data set.
 |
 |- [CATALOG]             A directory containing descriptive
 |     |                  information about this data set.
@@ -73,7 +72,7 @@ root
       |                   in record 1 of MCS DDR data product tables.
       |
       |- MCS_DDR2.FMT     A format file describing the columns
-                                      in record 2 of MCS DDR data product tables. 
+                          in record 2 of MCS DDR data product tables. 
 			
 ```
 
