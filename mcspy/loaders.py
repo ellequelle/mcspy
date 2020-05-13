@@ -41,16 +41,21 @@ def load_mix_dframe_years(years=[2006,2007,2008,2009,2010]):
         df = df.append(load_mix_dframe(yy))
     return df
 
-def load_mix_var(year, varname):
+def load_mix_var(year, varname, OLDMIX=False):
     '''Reads a metadata index variable for `varname` from `year` as a numpy array from the numpy array file "{year}/indexdata/{year}_{varname}_index.npy".'''
-    fname = MCS_DATA_PATH + f'DATA/{year}/indexdata/{year}_{varname}_index.npy'
-    with gzip.open(fname, 'rb') as fout:
-        var = np.load(fout)
+    if OLDMIX:
+        fname = MCS_DATA_PATH + f'DATA/{year}/indexdata/{year}_{varname}_index.npy'
+        with gzip.open(fname, 'rb') as fin:
+            var = np.load(fin)
+    else:
+        fname = MCS_DATA_PATH + f'DATA/{year}/indexdata/{year}_mixvars.npz'
+        with np.load(fname, allow_pickle=False) as fin:
+            var = fin[varname]
     if varname in ['date', 'datetime'] or 'date' in varname.lower():
         var = var.astype('datetime64[ns]')
     if varname in ['UTC']:
         var = var.astype('timedelta64[ns]')
-    print(f'loaded {fname}')
+    #print(f'loaded {fname}')
     return var
 
 def load_mix_var_years(years=[2006,2007,2008,2009,2010],
