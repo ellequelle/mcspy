@@ -27,8 +27,8 @@ def local_data_path(pth, ext=""):
 
 
 def mcs_tab_path(prodids, dfindex, volume=False, absolute=False):
-    """Guess the file path for the .TAB file with a given product ID 
-    (prodid). Prodids can be either a single string or a Series 
+    """Guess the file path for the .TAB file with a given product ID
+    (prodid). Prodids can be either a single string or a Series
     of strings."""
     df = dfindex.loc[prodids]
     path = "DATA/" + df["path"] + "/" + df["filename"]

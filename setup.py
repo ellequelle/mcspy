@@ -34,7 +34,8 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Physics",
         "Operating System :: OS Independent",
     ],
-    keywords="Mars Reconnaisance Orbiter Climate Sounder atmospheric radiative transfer PDS MCS planetary data system",
+    keywords=("Mars Reconnaisance Orbiter Climate Sounder atmospheric"
+              + " radiative transfer PDS MCS planetary data system"),
     entry_points={"console_scripts": [""]},
     python_requires=">=3.7",
 )

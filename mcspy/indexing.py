@@ -31,20 +31,48 @@ indexing = [
     "reload_index",
 ]
 
-# convenience functions for creating logical DataFrame indexes from the metadata index DataFrame
-lxquery = lambda mix, qstr: mix.index.isin(mix.query(qstr).index)
-lxmdgm = lambda mix: lxquery(qmarci_mdgm)
-lxlatrng = lambda mix, l0, l1: lxquery(mix, f"lat > {l0} & lat < {l1}")
-lxlonrng = lambda mix, l0, l1: lxquery(mix, f"lon > {l0} & lon < {l1}")
-lxyear = lambda mix, yr: lxquery(mix, f"date > {yr} & date < {yr+1}")
-lxtempe = lambda mix: lxquery(mix, qtempe)
-lxday = lambda mix: lxquery(mix, qday)
-lximg = lambda mix: lxquery(mix, qimg)
-lxLsN = lambda mix, Ls, N: lxquery(mix, f"Ls > {Ls} & Ls < {Ls+N}")
+
+# convenience functions for creating logical DataFrame indexes from
+# the metadata index DataFrame
+def lxquery(mix, qstr):
+    return mix.index.isin(mix.query(qstr).index)
+
+
+def lxmdgm(mix):
+    return lxquery(qmarci_mdgm)
+
+
+def lxlatrng(mix, l0, l1):
+    return lxquery(mix, f"lat > {l0} & lat < {l1}")
+
+
+def lxlonrng(mix, l0, l1):
+    return lxquery(mix, f"lon > {l0} & lon < {l1}")
+
+
+def lxyear(mix, yr):
+    return lxquery(mix, f"date > {yr} & date < {yr+1}")
+
+
+def lxtempe(mix):
+    return lxquery(mix, qtempe)
+
+
+def lxday(mix):
+    return lxquery(mix, qday)
+
+
+def lximg(mix):
+    return lxquery(mix, qimg)
+
+
+def lxLsN(mix, Ls, N):
+    return lxquery(mix, f"Ls > {Ls} & Ls < {Ls+N}")
 
 
 def reload_index(download=False, allow_download=True):
-    """Load the cumulative index file that lists every TAB data file in the PDS archive """
+    """Load the cumulative index file that lists every TAB data
+    file in the PDS archive """
     dftypes = {
         "volume_id": "string",
         "path": "string",
@@ -76,7 +104,7 @@ def reload_index(download=False, allow_download=True):
                 get_most_recent_index_ftp(
                     MCS_DATA_PATH + "CUMINDEX.TAB.gz"
                 )
-            except:  # fall back on http if ftp doesn't work
+            except Exception:  # fall back on http if ftp doesn't work
                 get_most_recent_index_http(
                     MCS_DATA_PATH + "CUMINDEX.TAB.gz"
                 )

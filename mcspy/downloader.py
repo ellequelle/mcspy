@@ -5,7 +5,7 @@ import gzip
 from ftplib import FTP
 from requests import get
 from .util import mcs_tab_path, addext
-from .defs import _most_recent_known_mrom
+from .defs import _most_recent_known_mrom, MCS_DATA_PATH
 
 __all__ = [
     "get_tab_files",
@@ -19,7 +19,7 @@ PDS_ROOT_URL = f"{PDS_ATMOS_HOST}{PDS_SERVER_PATH}"
 
 
 def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False):
-    """Given one or more product IDs (prodids), download .TAB data 
+    """Given one or more product IDs (prodids), download .TAB data
     files from the PDS."""
     if isinstance(prodids, str):
         prodids = [prodids]
@@ -44,7 +44,7 @@ def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False):
 
 
 def ftp_login():
-    """Convenience function to return an FTP object connected to the 
+    """Convenience function to return an FTP object connected to the
     PDS atmos server."""
     passwd = input('Email (as a "password" for PDS ftp server): ')
     print(f"Connecting to {PDS_ATMOS_HOST}...")
@@ -86,7 +86,7 @@ def get_most_recent_index_ftp(local_filepath="CUMINDEX.TAB.gz"):
 
 
 def get_most_recent_index_http(local_filepath="CUMINDEX.TAB.gz"):
-    """Assume this is the most recent file since it's difficult to search 
+    """Assume this is the most recent file since it's difficult to search
     with HTTP. """
     r = get(
         PDS_ROOT_URL + _most_recent_known_mrom + "/INDEX/CUMINDEX.TAB"

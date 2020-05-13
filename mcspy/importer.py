@@ -25,7 +25,7 @@ _others = [
 
 
 def save_prof_var(var, year, varname):
-    """Writes the profile data variable `varname` from `year`, passed 
+    """Writes the profile data variable `varname` from `year`, passed
     in the numpy array `var` to the numpy array file "{year}/profdata/
     {year}_{varname}_profiles.npy"."""
     fname = local_data_path(
@@ -57,7 +57,7 @@ def _append_mix_dframe(mix):
 
 
 def save_mix_var(var, year, varname):
-    """Writes a metadata index variable for `varname` from `year` as 
+    """Writes a metadata index variable for `varname` from `year` as
     a numpy array to the numpy array file
     '{year}/indexdata/{year}_{varname}_index.npy'."""
     fname = local_data_path(
@@ -73,8 +73,8 @@ def save_mix_var(var, year, varname):
 
 
 def save_mix_dframe(mix):
-    """Save a metadata index DataFrame to a numpy file (numeric data) 
-    and a csv file (non-numeric data). This function saves one 
+    """Save a metadata index DataFrame to a numpy file (numeric data)
+    and a csv file (non-numeric data). This function saves one
     DataFrame per earth year."""
     mix = mix.copy()
     mix = mix.reset_index()
@@ -107,7 +107,7 @@ def save_prof_df(dfprof):
 
 
 def _append_prof_var(var, year, varname):
-    """Append profile data passed in `var` for the variable `varname` 
+    """Append profile data passed in `var` for the variable `varname`
     and year `year` to a numpy array file. If the file does not exist,
     create it."""
     dat = var.reshape((-1, 105))
@@ -128,8 +128,8 @@ def _append_prof_var(var, year, varname):
 
 
 def _append_mix_var(var, year, varname):
-    """Append metadata data passed in `var` for the metadata variable 
-    `varname` and year `year` to a numpy array file. If the file does 
+    """Append metadata data passed in `var` for the metadata variable
+    `varname` and year `year` to a numpy array file. If the file does
     not exist, create it."""
     dat = var
     fname = local_data_path(
@@ -156,7 +156,7 @@ def _append_mix_dfvars(df):
 
 
 def _append_prof_df(dfprof):
-    """Append the data from columns in the profile DataFrame `dfprof` 
+    """Append the data from columns in the profile DataFrame `dfprof`
     to the respective data files."""
     year = dfprof["profid"].str.slice(None, 4).iloc[0]
     for vv in prof_cols:
@@ -178,21 +178,21 @@ def _shrink_df(df):
 
 
 def collect_yearly_vars(dfindex, MIX=True, PROF=True):
-    """Read the MCS TAB data files and save the metadata and profile 
+    """Read the MCS TAB data files and save the metadata and profile
     data to binary files to be easily read in the future.
 
-    This function creates yearly .npy array files with each file 
-    containing the data for one variable for the whole year. If TAB 
-    files are not found locally, it will attempt to download them from 
-    the PDS. 
+    This function creates yearly .npy array files with each file
+    containing the data for one variable for the whole year. If TAB
+    files are not found locally, it will attempt to download them from
+    the PDS.
 
-    This appends TAB files onto any data in already existing .npy or 
+    This appends TAB files onto any data in already existing .npy or
     .csv.gz files, and so this function should only be run once when
     first assembling the binary files.
 
     Parameters
     ----------
-    dfindex : DataFrame from the PDS index file loaded by `reload_index`. 
+    dfindex : DataFrame from the PDS index file loaded by `reload_index`.
     """
     # read max 10 days at a time between saves
     # loading files gets slower as the dataframes increase in size

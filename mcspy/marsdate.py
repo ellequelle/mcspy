@@ -6,7 +6,7 @@ try:
     from astropy.time import Time
 
     _useastropy = True
-except:
+except Exception:
     _useastropy = False
 
 __all__ = ["myls2utc", "utc2myls"]
@@ -19,11 +19,11 @@ http://www-mars.lmd.jussieu.fr/mars/time/martian_time.html
 There is a mean discrepency of about -0.088 (-0.106 to -0.068)
 degrees in converting to and from MY, Ls. The bulk of this error
 seems to be in the determination of MY, with up to 0.01 degrees
-due to the Ls-sol conversion. The highest error is for 
+due to the Ls-sol conversion. The highest error is for
 approximately 71 > Ls > 0.
-With the fix turned on (_FIX=True), the discrepency is down to 
+With the fix turned on (_FIX=True), the discrepency is down to
 RMS < 0.00071 degrees when running myls2utc(utc2myls(x)). This was
-optimized by adjusting the parameters below. Use of astropy has 
+optimized by adjusting the parameters below. Use of astropy has
 negligible impact on the discrepency.
 """
 
@@ -109,7 +109,7 @@ def utc2jd(time, scale="utc"):
     if _useastropy:
         try:
             return Time(time, scale=scale).jd
-        except:
+        except Exception:
             if isinstance(time, tuple):
                 return Time(
                     dict(
@@ -181,9 +181,11 @@ def jd2myls(jdate):
     # calculations from GISS mars24 docs
     # https://www.giss.nasa.gov/tools/mars24/help/algorithm.html
     ## j2000 date
-    T = (utc.jd - 2451545)/36525 # Julian centuries since 12:00 Jan 1, 2000 (UT)
+    # Julian centuries since 12:00 Jan 1, 2000 (UT)
+    T = (utc.jd - 2451545)/36525
     if utc < datetime(1970,1,1):
-        dtt_utcjd = 64.184 + 59*T - 51.2*T**2 - 67.1*T**3 - 16.4*T**4 # (TT - UTC)
+        # (TT - UTC)
+        dtt_utcjd = 64.184 + 59*T - 51.2*T**2 - 67.1*T**3 - 16.4*T**4
     else:
         df = load_leapsec(jdate-2400000.5, 'MJD')
     TT = utc.jd + dtt_utcjd # terrestrial time
@@ -192,31 +194,36 @@ def jd2myls(jdate):
 
     ## mars position
     M = np.mod(19.3871 + 0.52402073*dtj2000, 360) # mean anomaly
-    alpha_FMS = np.mod(270.3871 + 0.524038496*dtj2000, 360) # angle of fictitious mean sun
+    # angle of fictitious mean sun
+    alpha_FMS = np.mod(270.3871 + 0.524038496*dtj2000, 360)
     x = 0.985626*dtj2000
     PBS = (0.0071*cos(np.deg2rad(x/2.2353 + 49.409)) # perturbers
-            + 0.0057*np.cos(np.deg2rad(x/2.7543 + 168.173)) 
-            + 0.0039*np.cos(np.deg2rad(x/1.1177 + 191.837)) 
-            + 0.0037*np.cos(np.deg2rad(x/15.7866 + 21.736)) 
+            + 0.0057*np.cos(np.deg2rad(x/2.7543 + 168.173))
+            + 0.0039*np.cos(np.deg2rad(x/1.1177 + 191.837))
+            + 0.0037*np.cos(np.deg2rad(x/15.7866 + 21.736))
             + 0.0021*np.cos(np.deg2rad(x/2.1354 + 15.704))
             + 0.002*np.cos(np.deg2rad(x/2.4694 + 95.528)))
     Mrad = np.deg2rad(M)
-    eoc = ((10.691 + 3e-7*dtj2000)*np.sin(Mrad) + 0.623*np.sin(2*Mrad) # equation of center
-            + 0.050*np.sin(3*Mrad) + 0.005*np.sin(4*Mrad) + 0.0005*np.sin(5*Mrad) + PBS)
+    eoc = ((10.691 + 3e-7*dtj2000)*np.sin(Mrad)
+            + 0.623*np.sin(2*Mrad) # equation of center
+            + 0.050*np.sin(3*Mrad) + 0.005*np.sin(4*Mrad)
+            + 0.0005*np.sin(5*Mrad) + PBS)
     Ls = alpha_FMS + eoc # solar longitude
     Lsrad = np.deg2rad(Ls) # solar longitude
 
     ## time on mars
-    #EOT = 2.861*np.sin(2*Lsrad) - 0.071*np.sin(4*Lsrad) + 0.002*np.sin(6*Lsrad) - eoc
+    #EOT = 2.861*np.sin(2*Lsrad) - 0.071*np.sin(4*Lsrad)
+    #      + 0.002*np.sin(6*Lsrad) - eoc
     # time at mars prime meridian
-    #MST = np.mod(24*(((jdtt - 2451549.5)/1.0274912517) + 44796 - 0.0009626), 24) 
+    #MST = np.mod(24*(((jdtt - 2451549.5)/1.0274912517)
+    #             + 44796 - 0.0009626), 24)
     #LMST = np.mod(MST - lon/15, 24) # local mean solar time
     #TST = MST + EOT/15 # true solar time
     #LTST = LMST + EOT/15 # local true solar time
     #subsolar_lon = MST*15 + EOT + 180 # subsolar longitude
     """
 
-    ## Start by converting given date to Julian date
+    # Start by converting given date to Julian date
     # jdate = utc2jd()
 
     sol = (jdate - jdate_ref) * earthday / marsday
@@ -264,14 +271,16 @@ def myls2jd(MY, Ls, return_type="float"):
     sec_per_day = 86400  # Earth day length, in seconds
     # day_per_year = 365.2422 # number of earth days in an earth year
     ref_MY = 26
-    ref_jdate = 2452383.23  # Julian date for April 18.7 2002, Ls = 0, beginning of Mars Year 26
+    # Julian date for April 18.7 2002, Ls = 0, beginning of Mars Year 26
+    ref_jdate = 2452383.23
 
     # 1. Find julian date for the (beginning of) chose Mars Year
     jdate = (MY - ref_MY) * (
         sols_per_MY * (sec_per_sol / sec_per_day)
     ) + ref_jdate
 
-    # 2. Find the number of martian sols corresponding to sought Solar Longitude
+    # 2. Find the number of martian sols corresponding to
+    #    sought Solar Longitude
     # sol = Ls/360*sols_per_MY
     sol = ls2sol(Ls)
 
@@ -301,7 +310,8 @@ def ls2sol(Ls):
     peri_day = 485.35  # perihelion date (in sols)
     e_ellip = 0.09340  # orbital ecentricity
     peri_day = 485.35  # perihelion date (in sols)
-    timeperi = 1.90258341759902  # 2*Pi*(1-Ls(perihelion)/360) Ls(perihelion) = 250.99
+    # 2*Pi*(1-Ls(perihelion)/360) Ls(perihelion) = 250.99
+    timeperi = 1.90258341759902
     rad2deg = 180 / np.pi
 
     zteta = np.array(Ls) / rad2deg + timeperi  # true anomaly
@@ -352,7 +362,7 @@ def jd2utc(jdate, scale="utc"):
         from logging import warning
 
         warning("Values for hour, minute, and second are untested.")
-    except:
+    except Exception:
         pass
     # experimental, untested
     rr = (jdate - ijj) * 24 + 12
@@ -365,7 +375,7 @@ def jd2utc(jdate, scale="utc"):
 
 
 def _test_myls_utc(nt=500, plot=True, seed=None):
-    myls2ls = lambda x: (np.array(x) * [[360], [1]]).sum(axis=0)
+    myls2ls = lambda x: (np.array(x) * [[360], [1]]).sum(axis=0) # NOQA
     tests = np.stack(
         (np.random.randint(0, 45, nt), np.random.random(nt) * 360),
         axis=0,
@@ -385,15 +395,15 @@ def _test_myls_utc(nt=500, plot=True, seed=None):
         from matplotlib import pyplot as plt
 
         plt.scatter(tests[1, :], tests[0, :], c=diffs, marker=".")
-        plt.colorbar(label="$\Delta$L$_s$")
-        plt.xlabel("L$_s$")
+        plt.colorbar(label=r"$\Delta$L$_s$")
+        plt.xlabel(r"L$_s$")
         plt.ylabel("MY")
 
         plt.figure()
         plt.scatter(tests[1, :], diffs, c=tests[0, :], marker=".")
         plt.colorbar(label="MY")
-        plt.xlabel("L$_s$")
-        plt.ylabel("$\Delta$L$_s$")
+        plt.xlabel(r"L$_s$")
+        plt.ylabel(r"$\Delta$L$_s$")
         plt.show()
 
     return tests, utc, diffs, results
@@ -434,7 +444,7 @@ def load_leapsec(date=None, index="date"):
                         ll,
                     )
                 )
-            except:
+            except Exception:
                 lls.append(ll)
         return "\n".join(lls)
 
@@ -448,10 +458,10 @@ def load_leapsec(date=None, index="date"):
             if texp < datetime.now() or texp < date:
                 import requests
 
-                lsurl = "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat"
-                print(
-                    "Leapsecond table is outdated, attempting to fetch new table..."
-                )
+                lsurl = ("https://hpiers.obspm.fr/iers/bul/bulc/"
+                         + "Leap_Second.dat")
+                print("Leapsecond table is outdated, attempting to "
+                      + "fetch new table...")
                 print(lsurl)
                 req = requests.get(lsurl)
                 lines = req.text.split("\n")
@@ -471,7 +481,7 @@ def load_leapsec(date=None, index="date"):
         skiprows=14,
         header=None,
         names=["MJD", "date", "tai_utc"],
-        sep="\s+",
+        sep=r"\s+",
         infer_datetime_format=True,
     )
     buf.close()
@@ -480,23 +490,23 @@ def load_leapsec(date=None, index="date"):
     df = df.set_index(index)
     try:
         return df.reindex(pd.to_datetime(date), method="ffill")
-    except:
+    except Exception:
         pass
     return df.reindex(pd.to_datetime([date]), method="ffill")
 
 
 leapsec = """#  Value of TAI-UTC in second valid beetween the initial value until
 #  the epoch given on the next line. The last line reads that NO
-#  leap second was introduced since the corresponding date 
+#  leap second was introduced since the corresponding date
 #  Updated through IERS Bulletin 59 issued in January 2020
-#  
+#
 #
 #  File expires on 28 December 2020
 #
 #
 #    MJD        Date        TAI-UTC (s)
 #           day month year
-#    ---    --------------   ------   
+#    ---    --------------   ------
 #
 41317.0    1  1 1972       10
 41499.0    1  7 1972       11

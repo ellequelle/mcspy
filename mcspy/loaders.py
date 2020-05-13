@@ -28,7 +28,7 @@ __all__ = [
 
 
 def load_mix_dframe(year):
-    """Load and recreate a metadata index DataFrame from a numpy file 
+    """Load and recreate a metadata index DataFrame from a numpy file
     and a csv file. This function is the opposite of save_mix_dframe.
     returns: the metadata index DataFrame
     """
@@ -40,7 +40,8 @@ def load_mix_dframe(year):
         mix = pd.DataFrame(dict(_mix.items()))
     # mix = pd.DataFrame(mix, columns=mix_cols)
     fname = addext(fn, ".csv.gz")
-    # for vv in ['SCLK', 'Ls', 'solar_dist', 'orb_num', 'LST', 'lat', 'lon', 'MY']:
+    # for vv in ['SCLK', 'Ls', 'solar_dist', 'orb_num', 'LST',
+    # 'lat', 'lon', 'MY']:
     #    mix[vv] = pd.to_numeric(mix[vv], downcast='float')
     # load the index/profile ID column
     mix["profid"] = pd.read_csv(
@@ -55,7 +56,7 @@ def load_mix_dframe(year):
 
 
 def load_mix_dframe_years(years=[2006, 2007, 2008, 2009, 2010]):
-    """Load the metadata index files for several years and return one 
+    """Load the metadata index files for several years and return one
     concatenated DataFrame."""
     df = pd.DataFrame()
     for yy in years:
@@ -65,8 +66,8 @@ def load_mix_dframe_years(years=[2006, 2007, 2008, 2009, 2010]):
 
 def load_mix_var(year, varname, OLDMIX=False):
     """
-    Reads a metadata index variable for `varname` from `year` as a 
-    numpy array from the numpy array file 
+    Reads a metadata index variable for `varname` from `year` as a
+    numpy array from the numpy array file
     '{year}/indexdata/{year}_{varname}_index.npy'.
     """
     if OLDMIX:
@@ -93,7 +94,7 @@ def load_mix_var(year, varname, OLDMIX=False):
 def load_mix_var_years(
     years=[2006, 2007, 2008, 2009, 2010], varname="temperature"
 ):
-    """Loads multiple years of data for the metadata index variable 
+    """Loads multiple years of data for the metadata index variable
     `varname` and returns a single 1-D numpy array."""
     dat = []
     for yy in years:
@@ -102,9 +103,9 @@ def load_mix_var_years(
 
 
 def load_prof_var(year, varname):
-    """Reads the profile data variable `varname` from `year` from 
+    """Reads the profile data variable `varname` from `year` from
     the numpy array file "{year}/profdata/{year}_{varname}_profiles.npy"
-    and returns a single 2-D array. If `varname` == "pressure", the 
+    and returns a single 2-D array. If `varname` == "pressure", the
     returned array is shape (105,1)."""
     # handle pressure separately
     if varname == "pressure" or "varname" == "prs":
@@ -125,8 +126,8 @@ def load_prof_var(year, varname):
 def load_prof_var_years(
     years=[2006, 2007, 2008, 2009, 2010], varname="temperature"
 ):
-    """Reads the profile data variable `varname` from `years` 
-    from the numpy array files and returns a single 2-D array. 
+    """Reads the profile data variable `varname` from `years`
+    from the numpy array files and returns a single 2-D array.
     If `varname` == "pressure", the returned array is shape (105,1)."""
     dat = []
     # handle pressure separately
@@ -141,12 +142,12 @@ def load_prof_var_years(
 
 # convenience functions to load several variables
 load_temperature = load_prof_var_years
-load_temperature_err = lambda: load_prof_var_years(varname="T_err")
-load_pressure = lambda: load_prof_var_years(varname="pressure")
-load_altitude = lambda: load_prof_var_years(varname="altitude")
-load_H2Oice = lambda: load_prof_var_years(varname="H2Oice")
-load_H2Oice_err = lambda: load_prof_var_years(varname="H2Oice_err")
-load_H2Ovap = lambda: load_prof_var_years(varname="H2Ovap")
-load_H2Ovap_err = lambda: load_prof_var_years(varname="H2Ovap_err")
-load_dust = lambda: load_prof_var_years(varname="dust")
-load_dust_err = lambda: load_prof_var_years(varname="dust_err")
+load_temperature_err = lambda: load_prof_var_years(varname="T_err") # noqa
+load_pressure = lambda: load_prof_var_years(varname="pressure") # noqa
+load_altitude = lambda: load_prof_var_years(varname="altitude") # noqa
+load_H2Oice = lambda: load_prof_var_years(varname="H2Oice") # noqa
+load_H2Oice_err = lambda: load_prof_var_years(varname="H2Oice_err") # noqa
+load_H2Ovap = lambda: load_prof_var_years(varname="H2Ovap") # noqa
+load_H2Ovap_err = lambda: load_prof_var_years(varname="H2Ovap_err") # noqa
+load_dust = lambda: load_prof_var_years(varname="dust") # noqa
+load_dust_err = lambda: load_prof_var_years(varname="dust_err") # noqa

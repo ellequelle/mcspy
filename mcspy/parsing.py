@@ -1,10 +1,19 @@
-import io, gzip
-from os.path import basename, isabs, exists
+import io
+import gzip
+from os.path import (
+    basename,
+    isabs,
+    exists,
+)
 import numpy as np
 import pandas as pd
 from .marsdate import utc2myls
 from .downloader import get_tab_files
-from .util import mcs_tab_path, add_prof_profid, add_prof_rowid
+from .util import (
+    mcs_tab_path,
+    add_prof_profid,
+    add_prof_rowid,
+)
 from .defs import (
     MCS_DATA_PATH,
     mix_keep_cols,
@@ -19,16 +28,19 @@ from .defs import (
     mix_time_cols,
 )
 
-__all__ = ["parse_tab_file", "load_tab_file"]
+__all__ = [
+    "parse_tab_file",
+    "load_tab_file",
+]
 
 
 def load_tab_file(prodid, dfindex, **kwargs):
-    """Load the data from the raw text file. Downloads the file if it 
+    """Load the data from the raw text file. Downloads the file if it
     isn't found locally.
-    Returns a DataFrame with metadata and a DataFrame with the actual 
+    Returns a DataFrame with metadata and a DataFrame with the actual
     profile data."""
     # get the absolute path
-    path = mcs_tab_path(prodid, dfindex, absolute=True)
+    path = mcs_tab_path(prodid, dfindex, absolute=True,)
     # print(path)
     if not exists(path):
         # if not found, look for gzipped version
@@ -36,31 +48,33 @@ def load_tab_file(prodid, dfindex, **kwargs):
             path = path + ".gz"
         else:
             # if no compressed version, try downloading
-            get_tab_files(prodid, dfindex)
+            get_tab_files(
+                prodid, dfindex,
+            )
             path = path + ".gz"
     # parse the TAB file and return two DataFrames
     return parse_tab_file(path, **kwargs)
 
 
 def parse_tab_file(
-    fn, meta=True, data=True, mix_keep_cols=mix_keep_cols
+    fn, meta=True, data=True, mix_keep_cols=mix_keep_cols,
 ):
-    """Given a TAB file name, parse the MCS file and return the 
+    """Given a TAB file name, parse the MCS file and return the
     metadata (location, Ls, LST, etc) and the profiles in two DataFrames.
     meta: whether to return the metadata DataFrame
     data: whether to return the profile data DataFrame
-    mix_keep_cols: columns to keep in the metadata (default value is 
+    mix_keep_cols: columns to keep in the metadata (default value is
     set above)
     """
 
     # read file, separating the metadata lines from the profile data lines
-    mdlines, dats = _read_lists(fn)
+    (mdlines, dats,) = _read_lists(fn)
 
     # product ID (prodid) is the name of the TAB file
     prodid = basename(fn.replace(".gz", ""))
 
     mdl = {}
-    for k, (a, b) in mix_date_col_lookup.items():
+    for (k, (a, b),) in mix_date_col_lookup.items():
         if a in mix_use_cols and b in mix_use_cols:
             mdl[k] = [a, b]
 
@@ -108,7 +122,8 @@ def parse_tab_file(
     dfmd["UTC"] = pd.to_timedelta(dfmd["UTC"])
     # make a datetime column with the actual UTC time
     dfmd["datetime"] = dfmd["date"] + dfmd["UTC"]
-    # use the datetime column to calculate the Mars Year and Ls for each retrieval
+    # use the datetime column to calculate the Mars Year and Ls for
+    # each retrieval
     mycls = np.transpose(utc2myls(dfmd["datetime"]))
     df = pd.DataFrame(mycls, columns=["MY", "cLs"], index=dfmd.index)
     dfmd = dfmd.join(df)
@@ -128,11 +143,10 @@ def parse_tab_file(
             na_values=-9999.0,
         )
 
-        # add a column with the profile number (number from the top of the file)
+        # add a column with the profile number (number from the top
+        # of the file)
         prof_num = (
-            np.tile(np.array(range(nlen)), (105, 1))
-            .transpose()
-            .flatten()
+            np.tile(np.array(range(nlen)), (105, 1),).transpose().flatten()
         )
         # this file has two bad profiles
         # 2006121500_DDR.TAB 4348 (34230, 15) (34020,)
@@ -169,9 +183,7 @@ def _read_lists(fn):
         fn = MCS_DATA_PATH + fn
     if fn.endswith("gz"):
         with gzip.open(fn, "rb") as fin:
-            lines = (
-                fin.read().decode("ascii").replace('"', "").split("\n")
-            )
+            lines = fin.read().decode("ascii").replace('"', "").split("\n")
     else:
         with open(fn, "r") as fin:
             lines = fin.read().replace('"', "").split("\n")
@@ -187,7 +199,7 @@ def _read_lists(fn):
     mdlines = lines[::106]  # metadata lines
     # get data lines with profiles separated
     dats = [
-        lines[n * 106 + 1 : (n + 1) * 106]
+        lines[slice((n * 106 + 1), ((n + 1) * 106))]
         for n in range(len(lines) // 106)
     ]
     return mdlines, dats
