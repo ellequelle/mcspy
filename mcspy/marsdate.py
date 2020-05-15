@@ -375,10 +375,9 @@ def jd2utc(jdate, scale="utc"):
 
 
 def _test_myls_utc(nt=500, plot=True, seed=None):
-    myls2ls = lambda x: (np.array(x) * [[360], [1]]).sum(axis=0) # NOQA
+    myls2ls = lambda x: (np.array(x) * [[360], [1]]).sum(axis=0)  # NOQA
     tests = np.stack(
-        (np.random.randint(0, 45, nt), np.random.random(nt) * 360),
-        axis=0,
+        (np.random.randint(0, 45, nt), np.random.random(nt) * 360), axis=0,
     )
     if _useastropy:
         utc = myls2utc(*tests)
@@ -458,10 +457,14 @@ def load_leapsec(date=None, index="date"):
             if texp < datetime.now() or texp < date:
                 import requests
 
-                lsurl = ("https://hpiers.obspm.fr/iers/bul/bulc/"
-                         + "Leap_Second.dat")
-                print("Leapsecond table is outdated, attempting to "
-                      + "fetch new table...")
+                lsurl = (
+                    "https://hpiers.obspm.fr/iers/bul/bulc/"
+                    + "Leap_Second.dat"
+                )
+                print(
+                    "Leapsecond table is outdated, attempting to "
+                    + "fetch new table..."
+                )
                 print(lsurl)
                 req = requests.get(lsurl)
                 lines = req.text.split("\n")

@@ -44,9 +44,7 @@ def load_mix_dframe(year):
     # 'lat', 'lon', 'MY']:
     #    mix[vv] = pd.to_numeric(mix[vv], downcast='float')
     # load the index/profile ID column
-    mix["profid"] = pd.read_csv(
-        fname, squeeze=True, header=None, skiprows=1
-    )
+    mix["profid"] = pd.read_csv(fname, squeeze=True, header=None, skiprows=1)
     # change time columns back to datetime types
     for cc in ["datetime"]:
         mix[cc] = mix[cc].astype("datetime64[ns]")
@@ -72,15 +70,12 @@ def load_mix_var(year, varname, OLDMIX=False):
     """
     if OLDMIX:
         fname = (
-            MCS_DATA_PATH
-            + f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
+            MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
         )
         with gzip.open(fname, "rb") as fin:
             var = np.load(fin)
     else:
-        fname = (
-            MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_mixvars.npz"
-        )
+        fname = MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_mixvars.npz"
         with np.load(fname, allow_pickle=False) as fin:
             var = fin[varname]
     if varname in ["date", "datetime"] or "date" in varname.lower():
@@ -109,12 +104,9 @@ def load_prof_var(year, varname):
     returned array is shape (105,1)."""
     # handle pressure separately
     if varname == "pressure" or "varname" == "prs":
-        return 610 * np.exp(-0.125 * (np.arange(105) - 9)).reshape(
-            (1, 105)
-        )
+        return 610 * np.exp(-0.125 * (np.arange(105) - 9)).reshape((1, 105))
     fname = (
-        MCS_DATA_PATH
-        + f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
+        MCS_DATA_PATH + f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
     )
     # load data
     with gzip.open(fname, "rb") as fout:
@@ -142,20 +134,19 @@ def load_prof_var_years(
 
 # convenience functions to load several variables
 load_temperature = load_prof_var_years
-load_temperature_err = lambda: load_prof_var_years(varname="T_err") # noqa
-load_pressure = lambda: load_prof_var_years(varname="pressure") # noqa
-load_altitude = lambda: load_prof_var_years(varname="altitude") # noqa
-load_H2Oice = lambda: load_prof_var_years(varname="H2Oice") # noqa
-load_H2Oice_err = lambda: load_prof_var_years(varname="H2Oice_err") # noqa
-load_H2Ovap = lambda: load_prof_var_years(varname="H2Ovap") # noqa
-load_H2Ovap_err = lambda: load_prof_var_years(varname="H2Ovap_err") # noqa
-load_dust = lambda: load_prof_var_years(varname="dust") # noqa
-load_dust_err = lambda: load_prof_var_years(varname="dust_err") # noqa
-load_SZA = lambda: load_mix_var_years(varname='solar_zen') # noqa
-load_Ls = lambda: load_mix_var_years(varname='Ls') # noqa
-load_MY = lambda: load_mix_var_years(varname='MY') # noqa
-load_LST = lambda: load_mix_var_years(varname='LST') # noqa
-load_lat = lambda: load_mix_var_years(varname='lat') # noqa
-load_lon = lambda: load_mix_var_years(varname='lon') # noqa
-load_Ls2 = lambda: load_Ls() + 360*(load_MY()-28) # noqa
-
+load_temperature_err = lambda: load_prof_var_years(varname="T_err")  # noqa
+load_pressure = lambda: load_prof_var_years(varname="pressure")  # noqa
+load_altitude = lambda: load_prof_var_years(varname="altitude")  # noqa
+load_H2Oice = lambda: load_prof_var_years(varname="H2Oice")  # noqa
+load_H2Oice_err = lambda: load_prof_var_years(varname="H2Oice_err")  # noqa
+load_H2Ovap = lambda: load_prof_var_years(varname="H2Ovap")  # noqa
+load_H2Ovap_err = lambda: load_prof_var_years(varname="H2Ovap_err")  # noqa
+load_dust = lambda: load_prof_var_years(varname="dust")  # noqa
+load_dust_err = lambda: load_prof_var_years(varname="dust_err")  # noqa
+load_SZA = lambda: load_mix_var_years(varname="solar_zen")  # noqa
+load_Ls = lambda: load_mix_var_years(varname="Ls")  # noqa
+load_MY = lambda: load_mix_var_years(varname="MY")  # noqa
+load_LST = lambda: load_mix_var_years(varname="LST")  # noqa
+load_lat = lambda: load_mix_var_years(varname="lat")  # noqa
+load_lon = lambda: load_mix_var_years(varname="lon")  # noqa
+load_Ls2 = lambda: load_Ls() + 360 * (load_MY() - 28)  # noqa

@@ -91,9 +91,7 @@ def save_mix_dframe(mix):
     # save numeric data columns as a 2-D numpy array
     for cc in ["datetime"]:
         mix[cc] = mix[cc].astype(int)
-    np.savez_compressed(
-        fn, **{n: mix[n].to_numpy() for n in mix.columns}
-    )
+    np.savez_compressed(fn, **{n: mix[n].to_numpy() for n in mix.columns})
     # fname = addext(fn, '.npy')
     # np.save(fname, mix[mix_cols].values, False)
     print(f"saved {fname}, {mix.shape}")
@@ -211,14 +209,10 @@ def collect_yearly_vars(dfindex, MIX=True, PROF=True):
             dfm, dfp = load_tab_file(prodid, dfindex)
             xpt = [prodid]
             if MIX:
-                dfmix = dfmix.append(
-                    _shrink_df(dfm), verify_integrity=True
-                )
+                dfmix = dfmix.append(_shrink_df(dfm), verify_integrity=True)
                 xpt += [dfmix.index.nunique()]
             if PROF:
-                dfprof = dfprof.append(
-                    _shrink_df(dfp), verify_integrity=True
-                )
+                dfprof = dfprof.append(_shrink_df(dfp), verify_integrity=True)
                 xpt += [dfprof.index.nunique()]
             print(*xpt)
         if MIX:

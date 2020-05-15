@@ -30,8 +30,15 @@ from .loaders import (
 )
 from .parsing import parse_tab_file, load_tab_file
 from .util import mcs_tab_path
-from .calc import (potential_temperature, profdiff,
-     nan2val, inf2nan, logmean, logstd, logvar)
+from .calc import (
+    potential_temperature,
+    profdiff,
+    nan2val,
+    inf2nan,
+    logmean,
+    logstd,
+    logvar,
+)
 
 """
 mcspy is for working with data from the [Mars Climate Sounder](https://mars.nasa.gov/mro/mission/instruments/mcs/), an instrument aboard the NASA [Mars Reconnaisance Orbiter](https://mars.nasa.gov/mro/mission/overview/).

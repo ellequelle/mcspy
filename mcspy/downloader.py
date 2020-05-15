@@ -27,9 +27,7 @@ def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False):
         # get the file path as it is stored on the PDS
         path = mcs_tab_path(prodid, dfindex, volume=True)
         # get the local file path, not including the volume
-        localpath = mcs_tab_path(
-            prodid, dfindex, volume=False, absolute=True
-        )
+        localpath = mcs_tab_path(prodid, dfindex, volume=False, absolute=True)
         # make sure directory exists
         makedirs(dirname(localpath), exist_ok=True)
         if use_ftp:
@@ -88,9 +86,7 @@ def get_most_recent_index_ftp(local_filepath="DATA/CUMINDEX.TAB.gz"):
 def get_most_recent_index_http(local_filepath="CUMINDEX.TAB.gz"):
     """Assume this is the most recent file since it's difficult to search
     with HTTP. """
-    r = get(
-        PDS_ROOT_URL + _most_recent_known_mrom + "/INDEX/CUMINDEX.TAB"
-    )
+    r = get(PDS_ROOT_URL + _most_recent_known_mrom + "/INDEX/CUMINDEX.TAB")
     r.raise_for_status()
     with gzip.open(MCS_DATA_PATH + "CUMINDEX.TAB.gz", "w") as fout:
         fout.write(r.content)

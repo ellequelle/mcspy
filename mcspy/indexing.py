@@ -93,9 +93,7 @@ def reload_index(download=False, allow_download=True):
             print("File CUMINDEX.TAB was not found locally.")
             if not allow_download:
                 return pd.DataFrame()
-            a = input(
-                "Attempt to download CUMINDEX.TAB from PDS? (y/n)"
-            )
+            a = input("Attempt to download CUMINDEX.TAB from PDS? (y/n)")
             if a.lower() != "y":
                 return pd.DataFrame()
             makedirs(MCS_DATA_PATH, exist_ok=True)

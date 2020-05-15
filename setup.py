@@ -12,7 +12,7 @@ install_requires = [
 
 setuptools.setup(
     name="mcspy-ellequelle",
-    version=__version__, # noqa
+    version=__version__,  # noqa
     author="Elle Hanson",
     author_email="elleh3113@gmail.com",
     description="",
@@ -34,8 +34,10 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Physics",
         "Operating System :: OS Independent",
     ],
-    keywords=("Mars Reconnaisance Orbiter Climate Sounder atmospheric"
-              + " radiative transfer PDS MCS planetary data system"),
+    keywords=(
+        "Mars Reconnaisance Orbiter Climate Sounder atmospheric"
+        + " radiative transfer PDS MCS planetary data system"
+    ),
     entry_points={"console_scripts": [""]},
     python_requires=">=3.7",
 )

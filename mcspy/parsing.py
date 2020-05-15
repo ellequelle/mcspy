@@ -21,7 +21,7 @@ from .defs import (
     data_columns,
     mix_use_cols,
     mix_tab_dtypes,
-    mix_date_col_lookup
+    mix_date_col_lookup,
 )
 
 __all__ = [

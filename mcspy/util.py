@@ -56,9 +56,7 @@ def add_prof_rowid(prof):
         return prof
     pp = prof.copy()
     pp = add_prof_profid(add_prof_prsnum(pp))
-    pp["rowid"] = (pp.profid + ":" + pp.prsnum.astype(str)).astype(
-        "string"
-    )
+    pp["rowid"] = (pp.profid + ":" + pp.prsnum.astype(str)).astype("string")
     return pp
 
 
@@ -66,9 +64,9 @@ def add_prof_profid(prof):
     if "profid" in prof:
         return prof
     pp = prof.copy()
-    pp["profid"] = (
-        pp["prodid"] + ":" + pp.prof_num.astype(str)
-    ).astype("string")
+    pp["profid"] = (pp["prodid"] + ":" + pp.prof_num.astype(str)).astype(
+        "string"
+    )
     return pp
 
 
