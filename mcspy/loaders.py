@@ -158,4 +158,4 @@ load_LST = lambda: load_mix_var_years(varname='LST') # noqa
 load_lat = lambda: load_mix_var_years(varname='lat') # noqa
 load_lon = lambda: load_mix_var_years(varname='lon') # noqa
 load_Ls2 = lambda: load_Ls() + 360*(load_MY()-28) # noqa
-    
+
