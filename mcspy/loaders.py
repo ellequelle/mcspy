@@ -151,3 +151,4 @@ load_H2Ovap = lambda: load_prof_var_years(varname="H2Ovap") # noqa
 load_H2Ovap_err = lambda: load_prof_var_years(varname="H2Ovap_err") # noqa
 load_dust = lambda: load_prof_var_years(varname="dust") # noqa
 load_dust_err = lambda: load_prof_var_years(varname="dust_err") # noqa
+load_SZA = lambda: load_mix_var_years(varname='solar_zen') # noqa

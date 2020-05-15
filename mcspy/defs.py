@@ -24,7 +24,7 @@ __all__ = [
 
 
 # query strings
-qday = "LST > 0.4"
+qday = "solar_zen < 90"
 qnight = "LST <= 0.4"
 qregion = "lat < 50 & lat > 30 & lon > -91 & lon < -60"
 qtempe = "lat < 47.8 & lat > 43 & lon > -83.3 & lon < -70"
