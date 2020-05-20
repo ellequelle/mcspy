@@ -5,7 +5,7 @@ from os.path import exists, dirname
 import numpy as np
 import pandas as pd
 from .loaders import load_mix_var, load_prof_var, load_mix_dframe
-from .util import local_data_path, addext
+from .util import local_data_path, addext, make_profidint_mix_df
 from .parsing import load_tab_file
 from .defs import mix_cols, prof_cols
 
@@ -77,7 +77,7 @@ def save_mix_dframe(mix):
     and a csv file (non-numeric data). This function saves one
     DataFrame per earth year."""
     mix = mix.copy()
-    mix = mix.reset_index()
+    mix = mix.reset_index() # index becomes "profid" column
     year = mix["profid"].str.slice(None, 4).iloc[0]
     fn = local_data_path(f"DATA/{year}/indexdata/{year}_mixvars")
     # drop product ID
@@ -96,13 +96,11 @@ def save_mix_dframe(mix):
     # np.save(fname, mix[mix_cols].values, False)
     print(f"saved {fname}, {mix.shape}")
 
-
 def save_prof_df(dfprof):
     year = dfprof["profid"].str.slice(None, 4).iloc[0]
     for vv in prof_cols:
         if vv in dfprof:
             save_prof_var(dfprof[vv].to_numpy(), year, vv)
-
 
 def _append_prof_var(var, year, varname):
     """Append profile data passed in `var` for the variable `varname`
@@ -144,13 +142,13 @@ def _append_mix_var(var, year, varname):
         save_mix_var(oldvar, year, varname)
         print(f"mix {varname}, {year}, {oldvar.shape}")
 
-
 def _append_mix_dfvars(df):
     year = df["datetime"].dt.year.unique()
     year = year[0]
-    for vv in mix_cols:
-        if vv in df:
-            _append_mix_var(df[vv].to_numpy(), year, vv)
+    mix = make_profidint_mix_df(df.copy())
+    for vv in mix_cols + ['profidint']:
+        if vv in mix:
+            _append_mix_var(mix[vv].to_numpy(), year, vv)
 
 
 def _append_prof_df(dfprof):
