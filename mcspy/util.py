@@ -11,7 +11,7 @@ __all__ = [
     "add_prof_rowid",
     "addext",
     "mcs_tab_path",
-    "make_profidint_mix_df",
+    "make_profidint",
     "profidint_to_profid",
 ]
 

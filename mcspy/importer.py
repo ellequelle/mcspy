@@ -5,7 +5,7 @@ from os.path import exists, dirname
 import numpy as np
 import pandas as pd
 from .loaders import load_mix_var, load_prof_var, load_mix_dframe
-from .util import local_data_path, addext, make_profidint_mix_df
+from .util import local_data_path, addext, make_profidint
 from .parsing import load_tab_file
 from .defs import mix_cols, prof_cols
 
@@ -145,7 +145,7 @@ def _append_mix_var(var, year, varname):
 def _append_mix_dfvars(df):
     year = df["datetime"].dt.year.unique()
     year = year[0]
-    mix = make_profidint_mix_df(df.copy())
+    mix['profidint'] = make_profidint(df.copy())
     for vv in mix_cols + ['profidint']:
         if vv in mix:
             _append_mix_var(mix[vv].to_numpy(), year, vv)
