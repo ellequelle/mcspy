@@ -75,9 +75,12 @@ def load_mix_var(year, varname, OLDMIX=False):
         with gzip.open(fname, "rb") as fin:
             var = np.load(fin)
     else:
-        fname = MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_mixvars.npz"
-        with np.load(fname, allow_pickle=False) as fin:
-            var = fin[varname]
+        try:
+            fname = MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_mixvars.npz"
+            with np.load(fname, allow_pickle=False) as fin:
+                var = fin[varname]
+        except KeyError:
+            var = load_mix_var(year, varname, True)
     if varname in ["date", "datetime"] or "date" in varname.lower():
         var = var.astype("datetime64[ns]")
     if varname in ["UTC"]:

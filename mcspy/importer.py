@@ -22,6 +22,7 @@ _others = [
     "_append_prof_var",
     "_append_mix_var",
     "_append_prof_df",
+    "_load_tab_files",
 ]
 
 
@@ -214,21 +215,24 @@ def collect_yearly_vars(dfindex, MIX=True, PROF=True):
     ).unique()
     for ym in ymms:
         dfi = dfindex.loc[dfindex.index.str.startswith(ym.astype(str))]
-        if MIX:
-            dfmix = pd.DataFrame()
-        if PROF:
-            dfprof = pd.DataFrame()
-        for prodid in dfi.index:
-            dfm, dfp = load_tab_file(prodid, dfindex)
-            xpt = [prodid]
-            if MIX:
-                dfmix = dfmix.append(_shrink_df(dfm), verify_integrity=True)
-                xpt += [dfmix.index.nunique()]
-            if PROF:
-                dfprof = dfprof.append(_shrink_df(dfp), verify_integrity=True)
-                xpt += [dfprof.index.nunique()]
-            print(*xpt)
+        dfmix, dfprof = _load_tab_files(dfi.index, dfindex, MIX=MIX, PROF=PROF)
         if MIX:
             _append_mix_dframe(dfmix)
         if PROF:
             _append_prof_df(dfprof)
+
+def _load_tab_files(prodids, dfindex, MIX=True, PROF=True):
+    dfmix = pd.DataFrame()
+    dfprof = pd.DataFrame()
+    for prodid in prodids:
+        dfm, dfp = load_tab_file(prodid, dfindex)
+        xpt = [prodid]
+        if MIX:
+            dfmix = dfmix.append(_shrink_df(dfm), verify_integrity=True)
+            xpt += [dfmix.index.nunique()]
+        if PROF:
+            dfprof = dfprof.append(_shrink_df(dfp), verify_integrity=True)
+            xpt += [dfprof.index.nunique()]
+        print(*xpt)
+    return dfmix, dfprof
+
