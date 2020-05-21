@@ -51,7 +51,10 @@ def batch_get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False):
     from multiprocessing import Pool
     starargs = ((x, dfindex, overwrite, use_ftp) for x in prodids)
     with Pool() as pp:
-        pp.starmap(get_tab_files, starargs)
+        try:
+            pp.starmap(get_tab_files, starargs)
+        except Exception:
+            pass
     
 def ftp_login():
     """Convenience function to return an FTP object connected to the
