@@ -13,6 +13,8 @@ __all__ = [
     "mcs_tab_path",
     "make_profidint",
     "profidint_to_profid",
+    "make_rowidint",
+    "rowidint_to_rowid",
 ]
 
 
@@ -91,8 +93,7 @@ def make_profidint(mix):
         mix = pd.Series(mix)
     mix = (mix.str.slice(None, 10).astype(int)*10000
             + mix.str.slice(19, None).astype(int))
-    mix.name = 'profidint'
-    return mix
+    return mix.values
 
 def profidint_to_profid(pidi):
     '''
@@ -113,6 +114,26 @@ def profidint_to_profid(pidi):
     profid = (date + "_DDR.TAB:" + profnum).astype('string')
     profid.name = "profid"
     return profid
+
+def make_rowidint(prof):
+    rid = pd.Series(prof)
+    rowidint = rid.str[:10].astype(int)
+    rid2 = rid.str[19:].str.split(':')
+    rid2a = rid2.apply(lambda x: x[0]).astype(int)
+    rid2b = rid2.apply(lambda x: x[1]).astype(int)
+    rowidint = rowidint*10000 + rid2a
+    rowidint = rowidint*1000 + rid2b
+    return rowidint.values
+
+def rowidint_to_rowid(rowidint):
+    if not isinstance(rowidint, pd.Series):
+        rowidint = pd.Series(rowidint)
+    rids = rowidint.astype(str)
+    rid = rids.str[:10] + '_DDR.TAB:'
+    rid += rids.str[10:14].astype(int).astype(str)
+    rid += ':' + rids.str[14:].astype(int).astype(str)
+    rid.name = 'rowid'
+    return rid.astype('string')
 
 def addext(fn, ext):
     """Add a file extension to a filename if it doesn't already exist."""

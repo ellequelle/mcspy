@@ -5,12 +5,13 @@ from os.path import exists, dirname
 import numpy as np
 import pandas as pd
 from .loaders import load_mix_var, load_prof_var, load_mix_dframe
-from .util import local_data_path, addext, make_profidint
+from .util import local_data_path, addext
 from .parsing import load_tab_file
 from .defs import mix_cols, prof_cols
 
 __all__ = [
     "collect_yearly_vars",
+    "find_missing_tab_files",
 ]
 _others = [
     "save_prof_var",
@@ -145,8 +146,8 @@ def _append_mix_var(var, year, varname):
 def _append_mix_dfvars(df):
     year = df["datetime"].dt.year.unique()
     year = year[0]
-    mix['profidint'] = make_profidint(df.copy())
-    for vv in mix_cols + ['profidint']:
+    mix = df
+    for vv in mix_cols:
         if vv in mix:
             _append_mix_var(mix[vv].to_numpy(), year, vv)
 
@@ -172,6 +173,20 @@ def _shrink_df(df):
             df_[vv] = pd.to_numeric(df_[vv], downcast="float")
     return df_
 
+
+def find_missing_tab_files(dfindex):
+    '''
+    look for all of the TAB files to see if they need to be downloaded
+    '''
+    from os.path import exists
+    from .util import mcs_tab_path
+    missing_prodids = []
+    # loop through rows
+    for prodid in dfindex.index:
+        fn = mcs_tab_path(prodid, dfindex, absolute=True)
+        if not exists(fn) and not exists(fn + '.gz'):
+            missing_prodids.append(prodid)
+    return missing_prodids
 
 def collect_yearly_vars(dfindex, MIX=True, PROF=True):
     """Read the MCS TAB data files and save the metadata and profile

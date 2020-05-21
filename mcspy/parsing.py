@@ -13,6 +13,8 @@ from .util import (
     mcs_tab_path,
     add_prof_profid,
     add_prof_rowid,
+    make_profidint,
+    make_rowidint,
 )
 from .defs import (
     MCS_DATA_PATH,
@@ -126,6 +128,7 @@ def parse_tab_file(
 
     # drop extra columns
     dfmd = dfmd[mix_keep_cols]
+    dfmd['profidint'] = make_profidint(dfmd)
 
     # deal with the profile data
     if data:
@@ -158,6 +161,9 @@ def parse_tab_file(
         dats = dats[~(dats["profid"].isin(badprofids))]
         # remove quality flag column
         dats.pop("1")
+
+        # make integer row ID
+        dats['rowidint'] = make_rowidint(dats.index)
 
         # return DataFrames
         if meta:
