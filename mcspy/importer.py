@@ -179,14 +179,20 @@ def find_missing_tab_files(dfindex):
     '''
     look for all of the TAB files to see if they need to be downloaded
     '''
+    from os import stat
     from os.path import exists
     from .util import mcs_tab_path
     missing_prodids = []
     # loop through rows
     for prodid in dfindex.index:
         fn = mcs_tab_path(prodid, dfindex, absolute=True)
-        if not exists(fn) and not exists(fn + '.gz'):
-            missing_prodids.append(prodid)
+        tf = False # assume does not exist
+        if not exists(fn): # try both .TAB and .TAB.gz
+            fn = fn + '.gz'
+        if exists(fn): # this should be the correct name if it exists
+            tf = stat(fn).st_size > 1e4 # make sure it's a reasonable size
+        if not tf: # if it does not exist or is unreasonably small
+            missing_prodids.append(prodid) # add file to missing list
     return missing_prodids
 
 def collect_yearly_vars(dfindex, MIX=True, PROF=True):
