@@ -190,7 +190,7 @@ def find_missing_tab_files(dfindex):
         if not exists(fn): # try both .TAB and .TAB.gz
             fn = fn + '.gz'
         if exists(fn): # this should be the correct name if it exists
-            tf = stat(fn).st_size > 1e4 # make sure it's a reasonable size
+            tf = stat(fn).st_size > 5e3 # make sure it's a reasonable size
         if not tf: # if it does not exist or is unreasonably small
             missing_prodids.append(prodid) # add file to missing list
     return missing_prodids
@@ -228,6 +228,8 @@ def collect_yearly_vars(dfindex, MIX=True, PROF=True):
             _append_prof_df(dfprof)
 
 def _load_tab_files(prodids, dfindex, MIX=True, PROF=True):
+    dfmix = []
+    dfprof = []
     dfmix = pd.DataFrame()
     dfprof = pd.DataFrame()
     for prodid in prodids:
@@ -235,10 +237,16 @@ def _load_tab_files(prodids, dfindex, MIX=True, PROF=True):
         xpt = [prodid]
         if MIX:
             dfmix = dfmix.append(_shrink_df(dfm), verify_integrity=True)
+            #dfmix.append(_shrink_df(dfm).reset_index().set_index('profidint'))
             xpt += [dfmix.index.nunique()]
         if PROF:
             dfprof = dfprof.append(_shrink_df(dfp), verify_integrity=True)
+            #dfprof.append(_shrink_df(dfp).reset_index().set_index('rowidint'))
             xpt += [dfprof.index.nunique()]
         print(*xpt)
+    #if MIX:
+    #    dfmix = pd.concat(dfmix).set_index('profid')
+    #if PROF:
+    #    dfprof = pd.concat(dfprof).set_index('profid')
     return dfmix, dfprof
 

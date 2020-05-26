@@ -73,6 +73,33 @@ def add_prof_profid(prof):
     )
     return pp
 
+def make_prodidint(ix):
+    '''
+    Make a integer version of prodid.
+    ix: a series or a DataFrame with a column or index named "prodid"
+
+    returns: pandas integer Series of profidint
+    '''
+    ix = ix.copy()
+    # make an integer version of profile ID
+    # date identifies the data file, multipy by 1e4 to allow
+    # up to 9999 profiles per data file
+    # profile number in the data file
+    if isinstance(ix, pd.DataFrame):
+        if 'prodid' not in ix:
+            ix = ix.reset_index()
+        ix = ix['prodid']
+    elif not isinstance(ix, pd.Series):
+        ix = pd.Series(ix)
+    ix = ix.str.slice(None, 10).astype(int)
+    return ix.values
+
+def prodidint_to_prodid(pidi):
+    if not isinstance(pidi, (pd.Series)):
+        pidi = pd.Series(pidi, name="profid")
+    pidi = pidi.astype(str).astype("string") + '_DDR.TAB'
+    return pidi
+
 def make_profidint(mix):
     '''
     Make a integer version of profid.
