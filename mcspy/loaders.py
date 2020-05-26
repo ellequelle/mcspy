@@ -53,6 +53,7 @@ def load_mix_dframe(year):
     # make profid the index
     return mix.set_index("profid")
 
+
 def load_mix_dframe_years(years=[2006, 2007, 2008, 2009, 2010]):
     """Load the metadata index files for several years and return one
     concatenated DataFrame."""
@@ -62,7 +63,7 @@ def load_mix_dframe_years(years=[2006, 2007, 2008, 2009, 2010]):
     return df
 
 
-def load_mix_var(year, varname, OLDMIX=False):
+def load_mix_var(year, varname, OLDMIX=False, quiet=False):
     """
     Reads a metadata index variable for `varname` from `year` as a
     numpy array from the numpy array file
@@ -85,24 +86,25 @@ def load_mix_var(year, varname, OLDMIX=False):
         var = var.astype("datetime64[ns]")
     if varname in ["UTC"]:
         var = var.astype("timedelta64[ns]")
-    # print(f'loaded {fname}')
+    if not quiet:
+        print(f'loaded {fname}')
     return var
 
 
 def load_prof_dframe(year):
-    '''
+    """
     Loads the profile data from `year` and returns a DataFrame.
-    '''
+    """
     from glob import glob
-    fname = (
-        MCS_DATA_PATH + f"DATA/{year}/profdata/{year}_*_profiles.npy"
-    )
+
+    fname = MCS_DATA_PATH + f"DATA/{year}/profdata/{year}_*_profiles.npy"
     varnames = [basename(x)[5:-13] for x in glob(fname)]
     df = pd.DataFrame()
     for vn in varnames:
         df[vn] = load_prof_var(year, vn).flatten()
-    df['rowid'] = rowidint_to_rowid(df['rowidint'])
-    return df.set_index('rowid').sort_values('rowidint')
+    df["rowid"] = rowidint_to_rowid(df["rowidint"])
+    return df.set_index("rowid").sort_values("rowidint")
+
 
 def load_mix_var_years(
     years=[2006, 2007, 2008, 2009, 2010], varname="temperature"
@@ -115,7 +117,7 @@ def load_mix_var_years(
     return np.concatenate(dat, axis=0)
 
 
-def load_prof_var(year, varname):
+def load_prof_var(year, varname, quiet=False):
     """Reads the profile data variable `varname` from `year` from
     the numpy array file "{year}/profdata/{year}_{varname}_profiles.npy"
     and returns a single 2-D array. If `varname` == "pressure", the
@@ -129,7 +131,8 @@ def load_prof_var(year, varname):
     # load data
     with gzip.open(fname, "rb") as fout:
         var = np.load(fout).reshape((-1, 105))
-    print(f"loaded {fname}")
+    if not quiet:
+        print(f"loaded {fname}")
     return var
 
 

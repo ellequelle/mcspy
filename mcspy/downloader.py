@@ -19,14 +19,15 @@ PDS_SERVER_PATH = "/PDS/data/"
 PDS_ROOT_URL = f"{PDS_ATMOS_HOST}{PDS_SERVER_PATH}"
 
 
-def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False, _pid=''):
+def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False, _pid=""):
     """Given one or more product IDs (prodids), download .TAB data
     files from the PDS."""
     import multiprocessing
+
     if isinstance(prodids, str):
         prodids = [prodids]
-    if _pid == '':
-        _pid = '{}'.format(multiprocessing.current_process().pid)
+    if _pid == "":
+        _pid = "{}".format(multiprocessing.current_process().pid)
     downloaded = []
     for prodid in prodids:
         # get the file path as it is stored on the PDS
@@ -35,13 +36,15 @@ def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False, _pid=''):
         localpath = mcs_tab_path(prodid, dfindex, volume=False, absolute=True)
         # make sure directory exists
         makedirs(dirname(localpath), exist_ok=True)
-        if exists(localpath) or exists(localpath+'.gz') and not overwrite:
-            print(f'({_pid}) File already exists: {prodid}')
+        if exists(localpath) or exists(localpath + ".gz") and not overwrite:
+            print(f"({_pid}) File already exists: {prodid}")
             continue
         try:
             if use_ftp:
                 get_tab_file_ftp(
-                    PDS_SERVER_PATH + "/" + path, addext(localpath, ".gz"), _pid
+                    PDS_SERVER_PATH + "/" + path,
+                    addext(localpath, ".gz"),
+                    _pid,
                 )
             else:
                 get_tab_file_http(
@@ -50,11 +53,13 @@ def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False, _pid=''):
             downloaded.append(localpath)
             print(f"({_pid}) Done")
         except Exception:
-            print(f'({_pid}) Download failed {prodid}')
+            print(f"({_pid}) Download failed {prodid}")
     return downloaded
+
 
 def batch_get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False):
     from multiprocessing import Pool
+
     starargs = ((x, dfindex, overwrite, use_ftp) for x in prodids)
     with Pool() as pp:
         try:
@@ -62,7 +67,8 @@ def batch_get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False):
         except Exception as e:
             return e
         return res
-    
+
+
 def ftp_login():
     """Convenience function to return an FTP object connected to the
     PDS atmos server."""
@@ -71,7 +77,7 @@ def ftp_login():
     return FTP(PDS_ATMOS_HOST, user="anonymous", passwd=passwd)
 
 
-def get_tab_file_http(server_filepath, local_filepath, _pid=''):
+def get_tab_file_http(server_filepath, local_filepath, _pid=""):
     """Download the specified file using HTTP. """
     print(f"({_pid}) Downloading {server_filepath}...")
     try:
@@ -86,7 +92,7 @@ def get_tab_file_http(server_filepath, local_filepath, _pid=''):
         raise Exception from e
 
 
-def get_tab_file_ftp(server_filepath, local_filepath, _pid=''):
+def get_tab_file_ftp(server_filepath, local_filepath, _pid=""):
     """Download the specified file using FTP. """
     with ftp_login() as ftp:
         with gzip.open(local_filepath, "w") as fout:
@@ -112,5 +118,3 @@ def get_most_recent_index_http(local_filepath="CUMINDEX.TAB.gz"):
     r.raise_for_status()
     with gzip.open(MCS_DATA_PATH + "CUMINDEX.TAB.gz", "w") as fout:
         fout.write(r.content)
-
-

@@ -40,8 +40,16 @@ def mcs_tab_path(prodids, dfindex=None, volume=False, absolute=False):
             isstring = True
         if not isinstance(prodids, pd.Series):
             prodids = pd.Series(prodids, dtype=str)
-        path = ("DATA/" + prodids.str[:4] + '/' + prodids.str[:6]
-                + '/' + prodids.str[:8] + '/' + prodids)
+        path = (
+            "DATA/"
+            + prodids.str[:4]
+            + "/"
+            + prodids.str[:6]
+            + "/"
+            + prodids.str[:8]
+            + "/"
+            + prodids
+        )
     else:
         df = dfindex.loc[prodids]
         path = "DATA/" + df["path"] + "/" + df["filename"]
@@ -88,95 +96,107 @@ def add_prof_profid(prof):
     )
     return pp
 
+
 def make_prodidint(ix):
-    '''
+    """
     Make a integer version of prodid.
     ix: a series or a DataFrame with a column or index named "prodid"
 
     returns: pandas integer Series of profidint
-    '''
+    """
     ix = ix.copy()
     # make an integer version of profile ID
     # date identifies the data file, multipy by 1e4 to allow
     # up to 9999 profiles per data file
     # profile number in the data file
     if isinstance(ix, pd.DataFrame):
-        if 'prodid' not in ix:
+        if "prodid" not in ix:
             ix = ix.reset_index()
-        ix = ix['prodid']
+        ix = ix["prodid"]
     elif not isinstance(ix, pd.Series):
         ix = pd.Series(ix)
     ix = ix.str.slice(None, 10).astype(int)
     return ix.values
 
+
 def prodidint_to_prodid(pidi):
     if not isinstance(pidi, (pd.Series)):
         pidi = pd.Series(pidi, name="profid")
-    pidi = pidi.astype(str).astype("string") + '_DDR.TAB'
+    pidi = pidi.astype(str).astype("string") + "_DDR.TAB"
     return pidi
 
+
 def make_profidint(mix):
-    '''
+    """
     Make a integer version of profid.
     mix: a series or a DataFrame with a column or index named "profid"
 
     returns: pandas integer Series of profidint
-    '''
+    """
     mix = mix.copy()
     # make an integer version of profile ID
     # date identifies the data file, multipy by 1e4 to allow
     # up to 9999 profiles per data file
     # profile number in the data file
     if isinstance(mix, pd.DataFrame):
-        if 'profid' not in mix:
+        if "profid" not in mix:
             mix = mix.reset_index()
-        mix = mix['profid']
+        mix = mix["profid"]
     elif not isinstance(mix, pd.Series):
         mix = pd.Series(mix)
-    mix = (mix.str.slice(None, 10).astype(int)*10000
-            + mix.str.slice(19, None).astype(int))
+    mix = mix.str.slice(None, 10).astype(int) * 10000 + mix.str.slice(
+        19, None
+    ).astype(int)
     return mix.values
 
+
 def profidint_to_profid(pidi):
-    '''
-    Make profid index from profidint. This is the inverse 
+    """
+    Make profid index from profidint. This is the inverse
     of make_profidint_mix_df.
     pidi: integer arraylike or pandas Series
 
     returns: pandas Series of profid strings
-    '''
+    """
     if not isinstance(pidi, (pd.Series)):
         pidi = pd.Series(pidi, name="profid")
     pidi = pidi.astype(str).astype("string")
     date = pidi.str.slice(None, 10)
     profnum = pidi.str.slice(10, None)
-    profnum = profnum.str.replace('0', ' ').\
-      str.lstrip().str.replace(' ', '0')
-    profnum[~profnum.str.isnumeric()] = '0'
-    profid = (date + "_DDR.TAB:" + profnum).astype('string')
+    profnum = profnum.str.replace("0", " ").str.lstrip().str.replace(" ", "0")
+    profnum[~profnum.str.isnumeric()] = "0"
+    profid = (date + "_DDR.TAB:" + profnum).astype("string")
     profid.name = "profid"
     return profid
+
 
 def make_rowidint(prof):
     rid = pd.Series(prof)
     rowidint = rid.str[:10].astype(int)
-    rid2 = rid.str[19:].str.split(':')
+    rid2 = rid.str[19:].str.split(":")
     rid2a = rid2.apply(lambda x: x[0]).astype(int)
     rid2b = rid2.apply(lambda x: x[1]).astype(int)
-    rowidint = rowidint*10000 + rid2a
-    rowidint = rowidint*1000 + rid2b
+    rowidint = rowidint * 10000 + rid2a
+    rowidint = rowidint * 1000 + rid2b
     return rowidint.values
+
 
 def rowidint_to_rowid(rowidint):
     if not isinstance(rowidint, pd.Series):
         rowidint = pd.Series(rowidint)
     rownum = rowidint % 1000
-    profnum = rowidint//1000 % 10000
-    prodidint = rowidint//1000//10000 
-    rid = (prodidint.astype(str) + '_DDR.TAB:' + profnum.astype(str)
-           + ':' + rownum.astype(str))
-    rid.name = 'rowid'
-    return rid.astype('string')
+    profnum = rowidint // 1000 % 10000
+    prodidint = rowidint // 1000 // 10000
+    rid = (
+        prodidint.astype(str)
+        + "_DDR.TAB:"
+        + profnum.astype(str)
+        + ":"
+        + rownum.astype(str)
+    )
+    rid.name = "rowid"
+    return rid.astype("string")
+
 
 def addext(fn, ext):
     """Add a file extension to a filename if it doesn't already exist."""
