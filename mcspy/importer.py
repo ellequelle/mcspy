@@ -4,7 +4,12 @@ from os import makedirs
 from os.path import exists, dirname
 import numpy as np
 import pandas as pd
-from .loaders import load_mix_var, load_prof_var, load_mix_dframe
+from .loaders import (
+    load_mix_var,
+    load_prof_var,
+    load_mix_dframe,
+    load_prof_dframe,
+)
 from .util import local_data_path, addext
 from .parsing import load_tab_file
 from .defs import mix_cols, prof_cols, MCS_DATA_PATH
@@ -12,6 +17,10 @@ from .defs import mix_cols, prof_cols, MCS_DATA_PATH
 __all__ = [
     "collect_yearly_vars",
     "find_missing_tab_files",
+    "import_downloaded_files",
+    "check_mix_data",
+    "sort_prof_data",
+    "sort_mix_data",
 ]
 _others = [
     "save_prof_var",
@@ -42,6 +51,8 @@ def save_prof_var(var, year, varname):
 
 def _append_mix_dframe(mix):
     """Append new rows onto an existing saved metadata index DataFrame."""
+    if len(mix) == 0:
+        return
     year = mix["datetime"].dt.year.unique()
     if year.size > 1:
         raise ValueError(
@@ -79,7 +90,7 @@ def save_mix_dframe(mix):
     and a csv file (non-numeric data). This function saves one
     DataFrame per earth year."""
     mix = mix.copy()
-    mix = mix.reset_index() # index becomes "profid" column
+    mix = mix.reset_index()  # index becomes "profid" column
     year = mix["profid"].str.slice(None, 4).iloc[0]
     fn = local_data_path(f"DATA/{year}/indexdata/{year}_mixvars")
     # drop product ID
@@ -98,16 +109,20 @@ def save_mix_dframe(mix):
     # np.save(fname, mix[mix_cols].values, False)
     print(f"saved {fname}, {mix.shape}")
 
+
 def save_prof_df(dfprof):
     year = dfprof["profid"].str.slice(None, 4).iloc[0]
     for vv in prof_cols:
         if vv in dfprof:
             save_prof_var(dfprof[vv].to_numpy(), year, vv)
 
+
 def _append_prof_var(var, year, varname):
     """Append profile data passed in `var` for the variable `varname`
     and year `year` to a numpy array file. If the file does not exist,
     create it."""
+    if len(var) == 0:
+        return
     dat = var.reshape((-1, 105))
     fname = local_data_path(
         f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
@@ -129,6 +144,8 @@ def _append_mix_var(var, year, varname):
     """Append metadata data passed in `var` for the metadata variable
     `varname` and year `year` to a numpy array file. If the file does
     not exist, create it."""
+    if len(var) == 0:
+        return
     dat = var
     fname = local_data_path(
         f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
@@ -144,7 +161,10 @@ def _append_mix_var(var, year, varname):
         save_mix_var(oldvar, year, varname)
         print(f"mix {varname}, {year}, {oldvar.shape}")
 
+
 def _append_mix_dfvars(df):
+    if len(df) == 0:
+        return
     year = df["datetime"].dt.year.unique()
     year = year[0]
     mix = df
@@ -156,6 +176,8 @@ def _append_mix_dfvars(df):
 def _append_prof_df(dfprof):
     """Append the data from columns in the profile DataFrame `dfprof`
     to the respective data files."""
+    if len(dfprof) == 0:
+        return
     year = dfprof["profid"].str.slice(None, 4).iloc[0]
     for vv in prof_cols:
         if vv in dfprof:
@@ -174,18 +196,22 @@ def _shrink_df(df):
             df_[vv] = pd.to_numeric(df_[vv], downcast="float")
     return df_
 
-def find_existing_tab_files(year='*', PATHS=False, ABSOLUTE=False):
-    '''
+
+def find_existing_tab_files(year="*", PATHS=False, ABSOLUTE=False):
+    """
     Find all existing .TAB or .TAB.gz files in the current MCS_DATA_PATH.
     By default, returns the product ID (filename) for each file
 
     PATHS: return the file paths
-    ABSOLUTE: return the absolute file paths (if False, returns paths 
+    ABSOLUTE: return the absolute file paths (if False, returns paths
         relative to MCS_DATA_PATH). Ignored if PATHS is false.
-    '''
+    """
     from pathlib import Path
-    pth = Path(MCS_DATA_PATH) / 'DATA'
-    allfiles = list(pth.glob(f'{year}/**/*TAB')) + list(pth.glob(f'{year}/**/*TAB.gz'))
+
+    pth = Path(MCS_DATA_PATH) / "DATA"
+    allfiles = list(pth.glob(f"{year}/**/*TAB")) + list(
+        pth.glob(f"{year}/**/*TAB.gz")
+    )
     if PATHS:
         if ABSOLUTE:
             return [x.absolute().as_posix() for x in allfiles]
@@ -193,55 +219,88 @@ def find_existing_tab_files(year='*', PATHS=False, ABSOLUTE=False):
     # last 3 characters are ".gz"
     return [x.name[:-3] for x in allfiles]
 
+
 def _get_missing_prodids(year):
-    '''
-    Compare avaliable TAB files to prodids in the {year}_profidint_index.npy file and return a list of product ID's of files not represented in binary data files.
-    '''
+    """
+    Compare avaliable TAB files to prodids in the {year}_profidint_index.npy
+    file and return a list of product ID's of files not represented in binary
+    data files.
+    """
     prodids = pd.Series(find_existing_tab_files()).str[:10]
     prodids = prodids[prodids.str.startswith(str(year))].astype(int)
-    mixprodids = pd.Series(pd.unique(np.trunc(load_mix_var(str(year), 'profidint')/1e4).astype(int)))
-    return (prodids.loc[~prodids.isin(mixprodids)].astype(str) + '_DDR.TAB').tolist()
+    mixprodids = pd.Series(
+        pd.unique(
+            np.trunc(load_mix_var(str(year), "profidint") / 1e4).astype(int)
+        )
+    )
+    return (
+        prodids.loc[~prodids.isin(mixprodids)].astype(str) + "_DDR.TAB"
+    ).tolist()
 
-def _check_mix_data(year):
-    '''
-    Check index and profile ID variables for consistency. Make sure sizes and values match.
-    '''
-    profids = load_mix_var(str(year), 'profidint')
-    rowids = load_prof_var(str(year), 'rowidint')
+
+def check_index_profiles(year, raise_for_false=True):
+    """
+    Check index and profile ID variables for consistency. Make sure sizes and
+    values match.
+    """
+    err = None
+    msg = ""
+    profids = load_mix_var(str(year), "profidint")
+    rowids = load_prof_var(str(year), "rowidint")
     if profids.shape[0] != rowids.shape[0]:
-        print('Index and profile sizes do not match.')
-        return False
-    lx = profids == (rowids[:,0]/1e3).astype(int)
+        msg = "Index and profile sizes do not match."
+        err = IndexError
+    lx = profids == (rowids[:, 0] / 1e3).astype(int)
     if not lx.all():
-        print('Profile ID\'s and row ID\'s are inconsistent.')
-        return False
-    return True
+        msg = "Profile ID's and row ID's are inconsistent."
+        err = ValueError
+    if not (np.sort(profids) == profids).all():
+        msg = "Profile ID's are not sorted."
+        err = AssertionError
+    if not (np.sort(rowids) == rowids).all():
+        msg = "Row ID's are not sorted."
+        err = AssertionError
+    if err is None:
+        return True
+    if raise_for_false:
+        raise (err(msg))
+
 
 def _get_new_prodids(year):
-    file_prodids = pd.Series(find_existing_tab_files(str(year))).str[:10].astype(int)
+    file_prodids = (
+        pd.Series(find_existing_tab_files(str(year))).str[:10].astype(int)
+    )
     try:
-        imported_prodids = pd.Series(pd.unique(load_mix_var(year, 'profidint')//10000))
+        imported_prodids = pd.Series(
+            pd.unique(load_mix_var(year, "profidint") // 10000)
+        )
     except FileNotFoundError:
         imported_prodids = pd.Series(dtype=int)
     return file_prodids[~file_prodids.isin(imported_prodids)]
 
+
 def import_downloaded_files(year):
     new_prodids = _get_new_prodids(year)
-    ymms = (new_prodids//1000).unique()
+    ymms = (new_prodids // 1000).unique()
     for ym in ymms:
-        pids = new_prodids[new_prodids//1000 == ym].astype(str) + '_DDR.TAB'
+        pids = new_prodids[new_prodids // 1000 == ym].astype(str) + "_DDR.TAB"
         dfm, dfp = _load_tab_files(pids.tolist())
+        if len(dfm) == 0 and len(dfp) == 0:
+            continue
+        if len(dfm) != len(dfp)//105:
+            raise ValueError("Index and profile data shapes don't match.")
         _append_mix_dframe(dfm)
         _append_prof_df(dfp)
-    print('Sorting index data...')
+    print("Sorting index data...")
     sort_mix_data(year)
-    print('Sorting profile data...')
+    print("Sorting profile data...")
     sort_prof_data(year)
-    return _check_mix_data(year)#new_prodids
+    return check_index_profiles(year)
+
 
 def sort_mix_data(year):
     _mix = load_mix_dframe(year)
-    mix = _mix.sort_values('profidint')
+    mix = _mix.sort_values("profidint")
     if _mix == mix:
         return
     save_mix_dframe(mix)
@@ -249,33 +308,44 @@ def sort_mix_data(year):
         if vv in mix:
             save_mix_var(mix[vv], year, vv)
 
-def sort_prof_data(year):
-    _prof = load_prof_dframe(year)
-    prof = _prof.sort_values('rowidint')
-    if _prof == prof:
-        return
-    save_prof_df(prof)
 
+def sort_prof_data(year):
+    rowidint = load_prof_var(year, 'rowidint')
+    ix = np.argsort(rowidint.flatten()).reshape(-1, 105)
+    save_prof_var(rowidint.flatten()[ix], year, 'rowidint')
+    for vv in prof_cols:
+        if vv == 'rowidint':
+            continue
+        try:
+            var = load_prof_var(year, vv)
+        except:
+            continue
+        prof = var.flatten()[ix]
+        save_prof_var(prof, year, vv)
+
+        
 def find_missing_tab_files(dfindex):
-    '''
-    List product ID's of any TAB files listed in dfindex that are not available 
+    """
+    List product ID's of any TAB files listed in dfindex that are not available
     locally.
-    '''
+    """
     from os import stat
     from os.path import exists
     from .util import mcs_tab_path
+
     missing_prodids = []
     # loop through rows
     for prodid in dfindex.index:
         fn = mcs_tab_path(prodid, dfindex, absolute=True)
-        tf = False # assume does not exist
-        if not exists(fn): # try both .TAB and .TAB.gz
-            fn = fn + '.gz'
-        if exists(fn): # this should be the correct name if it exists
-            tf = stat(fn).st_size > 5e3 # make sure it's a reasonable size
-        if not tf: # if it does not exist or is unreasonably small
-            missing_prodids.append(prodid) # add file to missing list
+        tf = False  # assume does not exist
+        if not exists(fn):  # try both .TAB and .TAB.gz
+            fn = fn + ".gz"
+        if exists(fn):  # this should be the correct name if it exists
+            tf = stat(fn).st_size > 5e3  # make sure it's a reasonable size
+        if not tf:  # if it does not exist or is unreasonably small
+            missing_prodids.append(prodid)  # add file to missing list
     return missing_prodids
+
 
 def collect_yearly_vars(dfindex, MIX=True, PROF=True):
     """Read the MCS TAB data files and save the metadata and profile
@@ -309,6 +379,7 @@ def collect_yearly_vars(dfindex, MIX=True, PROF=True):
         if PROF:
             _append_prof_df(dfprof)
 
+
 def _load_tab_files(prodids, dfindex=None, MIX=True, PROF=True):
     dfmix = []
     dfprof = []
@@ -319,16 +390,15 @@ def _load_tab_files(prodids, dfindex=None, MIX=True, PROF=True):
         xpt = [prodid]
         if MIX:
             dfmix = dfmix.append(_shrink_df(dfm), verify_integrity=True)
-            #dfmix.append(_shrink_df(dfm).reset_index().set_index('profidint'))
+            # dfmix.append(_shrink_df(dfm).reset_index().set_index('profidint'))
             xpt += [dfmix.index.nunique()]
         if PROF:
             dfprof = dfprof.append(_shrink_df(dfp), verify_integrity=True)
-            #dfprof.append(_shrink_df(dfp).reset_index().set_index('rowidint'))
+            # dfprof.append(_shrink_df(dfp).reset_index().set_index('rowidint'))
             xpt += [dfprof.index.nunique()]
         print(*xpt)
-    #if MIX:
+    # if MIX:
     #    dfmix = pd.concat(dfmix).set_index('profid')
-    #if PROF:
+    # if PROF:
     #    dfprof = pd.concat(dfprof).set_index('profid')
     return dfmix, dfprof
-

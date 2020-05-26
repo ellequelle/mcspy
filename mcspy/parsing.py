@@ -39,7 +39,6 @@ def load_tab_file(prodid, dfindex=None, download=True, **kwargs):
     profile data."""
     # get the absolute path
     path = mcs_tab_path(prodid, dfindex, absolute=True,)
-    # print(path)
     if not exists(path):
         # if not found, look for gzipped version
         if exists(path + ".gz"):
@@ -114,6 +113,12 @@ def parse_tab_file(
     # remove the quality marker row
     dfmd.pop("1")
 
+    # sometimes the none of the profiles are useful, then return empty DataFrames
+    if len(dfmd) == 0:
+        if meta:
+            return pd.DataFrame(), pd.DataFrame()
+        return pd.DataFrame()
+
     # convert date to datetime
     dfmd["date"] = pd.to_datetime(dfmd["date"])
     # convert UTC to timedelta
@@ -128,7 +133,7 @@ def parse_tab_file(
 
     # drop extra columns
     dfmd = dfmd[mix_keep_cols]
-    dfmd['profidint'] = make_profidint(dfmd)
+    dfmd["profidint"] = make_profidint(dfmd)
 
     # deal with the profile data
     if data:
@@ -163,7 +168,7 @@ def parse_tab_file(
         dats.pop("1")
 
         # make integer row ID
-        dats['rowidint'] = make_rowidint(dats.index)
+        dats["rowidint"] = make_rowidint(dats.index)
 
         # return DataFrames
         if meta:
