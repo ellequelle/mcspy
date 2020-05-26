@@ -1,9 +1,10 @@
 __package__ = "mcspy"
 
+from os.path import basename
 import gzip
 import numpy as np
 import pandas as pd
-from .util import addext
+from .util import addext, rowidint_to_rowid
 from .defs import MCS_DATA_PATH
 
 
@@ -52,7 +53,6 @@ def load_mix_dframe(year):
     # make profid the index
     return mix.set_index("profid")
 
-
 def load_mix_dframe_years(years=[2006, 2007, 2008, 2009, 2010]):
     """Load the metadata index files for several years and return one
     concatenated DataFrame."""
@@ -88,6 +88,18 @@ def load_mix_var(year, varname, OLDMIX=False):
     # print(f'loaded {fname}')
     return var
 
+
+def load_prof_dframe(year):
+    from glob import glob
+    fname = (
+        MCS_DATA_PATH + f"DATA/{year}/profdata/{year}_*_profiles.npy"
+    )
+    varnames = [basename(x)[5:-13] for x in glob(fname)]
+    df = pd.DataFrame()
+    for vn in varnames:
+        df[vn] = load_prof_var(year, vn).flatten()
+    df['rowid'] = rowidint_to_rowid(df['rowidint'])
+    return df.set_index('rowid').sort_values('rowidint')
 
 def load_mix_var_years(
     years=[2006, 2007, 2008, 2009, 2010], varname="temperature"

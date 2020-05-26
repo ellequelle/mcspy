@@ -155,10 +155,11 @@ def make_rowidint(prof):
 def rowidint_to_rowid(rowidint):
     if not isinstance(rowidint, pd.Series):
         rowidint = pd.Series(rowidint)
-    rids = rowidint.astype(str)
-    rid = rids.str[:10] + '_DDR.TAB:'
-    rid += rids.str[10:14].astype(int).astype(str)
-    rid += ':' + rids.str[14:].astype(int).astype(str)
+    rownum = rowidint % 1000
+    profnum = rowidint//1000 % 10000
+    prodidint = rowidint//1000//10000 
+    rid = (prodidint.astype(str) + '_DDR.TAB:' + profnum.astype(str)
+           + ':' + rownum.astype(str))
     rid.name = 'rowid'
     return rid.astype('string')
 
