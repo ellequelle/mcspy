@@ -7,7 +7,7 @@ import pandas as pd
 from .loaders import load_mix_var, load_prof_var, load_mix_dframe
 from .util import local_data_path, addext
 from .parsing import load_tab_file
-from .defs import mix_cols, prof_cols
+from .defs import mix_cols, prof_cols, MCS_DATA_PATH
 
 __all__ = [
     "collect_yearly_vars",
@@ -174,10 +174,53 @@ def _shrink_df(df):
             df_[vv] = pd.to_numeric(df_[vv], downcast="float")
     return df_
 
+def find_existing_tab_files(PATHS=False, ABSOLUTE=False):
+    '''
+    Find all existing .TAB or .TAB.gz files in the current MCS_DATA_PATH.
+    By default, returns the product ID (filename) for each file
+
+    PATHS: return the file paths
+    ABSOLUTE: return the absolute file paths (if False, returns paths 
+        relative to MCS_DATA_PATH). Ignored if PATHS is false.
+    '''
+    from pathlib import Path
+    pth = Path(MCS_DATA_PATH) / 'DATA'
+    allfiles = list(pth.glob('20*/**/*TAB')) + list(pth.glob('20*/**/*TAB.gz'))
+    if PATHS:
+        if ABSOLUTE:
+            return [x.absolute().as_posix() for x in allfiles]
+        return [x.relative_to(MCS_DATA_PATH).as_posix() for x in allfiles]
+    # last 3 characters are ".gz"
+    return [x.name[:-3] for x in allfiles]
+
+def _get_missing_prodids(year):
+    '''
+    Compare avaliable TAB files to prodids in the {year}_profidint_index.npy file and return a list of product ID's of files not represented in binary data files.
+    '''
+    prodids = pd.Series(find_existing_tab_files()).str[:10]
+    prodids = prodids[prodids.str.startswith(str(year))].astype(int)
+    mixprodids = pd.Series(pd.unique(np.trunc(load_mix_var(str(year), 'profidint')/1e4).astype(int)))
+    return (prodids.loc[~prodids.isin(mixprodids)].astype(str) + '_DDR.TAB').tolist()
+
+def _check_mix_data(year):
+    '''
+    Check index and profile ID variables for consistency. Make sure sizes and values match.
+    '''
+    profids = load_mix_var(str(year), 'profidint')
+    rowids = load_prof_var(str(year), 'rowidint')
+    if profids.shape[0] != rowids.shape[0]:
+        print('Index and profile sizes do not match.')
+        return False
+    lx = profids == (rowids[:,0]/1e3).astype(int)
+    if not lx.all():
+        print('Profile ID\'s and row ID\'s are inconsistent.')
+        return False
+    return True
 
 def find_missing_tab_files(dfindex):
     '''
-    look for all of the TAB files to see if they need to be downloaded
+    List product ID's of any TAB files listed in dfindex that are not available 
+    locally.
     '''
     from os import stat
     from os.path import exists
