@@ -29,18 +29,33 @@ def local_data_path(pth, ext=""):
     return str(pth)
 
 
-def mcs_tab_path(prodids, dfindex, volume=False, absolute=False):
+def mcs_tab_path(prodids, dfindex=None, volume=False, absolute=False):
     """Guess the file path for the .TAB file with a given product ID
     (prodid). Prodids can be either a single string or a Series
     of strings."""
-    df = dfindex.loc[prodids]
-    path = "DATA/" + df["path"] + "/" + df["filename"]
+    isstring = False
+    if dfindex is None:
+        if isinstance(prodids, str):
+            prodids = [prodids]
+            isstring = True
+        if not isinstance(prodids, pd.Series):
+            prodids = pd.Series(prodids, dtype=str)
+        path = ("DATA/" + prodids.str[:4] + '/' + prodids.str[:6]
+                + '/' + prodids.str[:8] + '/' + prodids)
+    else:
+        df = dfindex.loc[prodids]
+        path = "DATA/" + df["path"] + "/" + df["filename"]
     if volume:
         # volume is for downloading the file from PDS
+        if dfindex is None:
+            raise ValueError("dfindex is needed for volume.")
         path = df["volume_id"] + "/" + path
+    ret = path
     if absolute:
-        return MCS_DATA_PATH + path
-    return path
+        ret = MCS_DATA_PATH + path
+    if isstring:
+        return ret[0]
+    return ret
 
 
 def add_prof_prsnum(prof):

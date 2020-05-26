@@ -32,7 +32,7 @@ __all__ = [
 ]
 
 
-def load_tab_file(prodid, dfindex, **kwargs):
+def load_tab_file(prodid, dfindex=None, download=True, **kwargs):
     """Load the data from the raw text file. Downloads the file if it
     isn't found locally.
     Returns a DataFrame with metadata and a DataFrame with the actual
@@ -44,7 +44,7 @@ def load_tab_file(prodid, dfindex, **kwargs):
         # if not found, look for gzipped version
         if exists(path + ".gz"):
             path = path + ".gz"
-        else:
+        elif download:
             # if no compressed version, try downloading
             get_tab_files(
                 prodid, dfindex,

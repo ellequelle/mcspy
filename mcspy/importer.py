@@ -174,7 +174,7 @@ def _shrink_df(df):
             df_[vv] = pd.to_numeric(df_[vv], downcast="float")
     return df_
 
-def find_existing_tab_files(PATHS=False, ABSOLUTE=False):
+def find_existing_tab_files(year='*', PATHS=False, ABSOLUTE=False):
     '''
     Find all existing .TAB or .TAB.gz files in the current MCS_DATA_PATH.
     By default, returns the product ID (filename) for each file
@@ -185,7 +185,7 @@ def find_existing_tab_files(PATHS=False, ABSOLUTE=False):
     '''
     from pathlib import Path
     pth = Path(MCS_DATA_PATH) / 'DATA'
-    allfiles = list(pth.glob('20*/**/*TAB')) + list(pth.glob('20*/**/*TAB.gz'))
+    allfiles = list(pth.glob(f'{year}/**/*TAB')) + list(pth.glob(f'{year}/**/*TAB.gz'))
     if PATHS:
         if ABSOLUTE:
             return [x.absolute().as_posix() for x in allfiles]
@@ -216,6 +216,45 @@ def _check_mix_data(year):
         print('Profile ID\'s and row ID\'s are inconsistent.')
         return False
     return True
+
+def _get_new_prodids(year):
+    file_prodids = pd.Series(find_existing_tab_files(str(year))).str[:10].astype(int)
+    try:
+        imported_prodids = pd.Series(pd.unique(load_mix_var(year, 'profidint')//10000))
+    except FileNotFoundError:
+        imported_prodids = pd.Series(dtype=int)
+    return file_prodids[~file_prodids.isin(imported_prodids)]
+
+def import_downloaded_files(year):
+    new_prodids = _get_new_prodids(year)
+    ymms = (new_prodids//1000).unique()
+    for ym in ymms:
+        pids = new_prodids[new_prodids//1000 == ym].astype(str) + '_DDR.TAB'
+        dfm, dfp = _load_tab_files(pids.tolist())
+        _append_mix_dframe(dfm)
+        _append_prof_df(dfp)
+    print('Sorting index data...')
+    sort_mix_data(year)
+    print('Sorting profile data...')
+    sort_prof_data(year)
+    return _check_mix_data(year)#new_prodids
+
+def sort_mix_data(year):
+    _mix = load_mix_dframe(year)
+    mix = _mix.sort_values('profidint')
+    if _mix == mix:
+        return
+    save_mix_dframe(mix)
+    for vv in mix_cols:
+        if vv in mix:
+            save_mix_var(mix[vv], year, vv)
+
+def sort_prof_data(year):
+    _prof = load_prof_dframe(year)
+    prof = _prof.sort_values('rowidint')
+    if _prof == prof:
+        return
+    save_prof_df(prof)
 
 def find_missing_tab_files(dfindex):
     '''
@@ -270,7 +309,7 @@ def collect_yearly_vars(dfindex, MIX=True, PROF=True):
         if PROF:
             _append_prof_df(dfprof)
 
-def _load_tab_files(prodids, dfindex, MIX=True, PROF=True):
+def _load_tab_files(prodids, dfindex=None, MIX=True, PROF=True):
     dfmix = []
     dfprof = []
     dfmix = pd.DataFrame()
