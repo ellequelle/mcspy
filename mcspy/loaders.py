@@ -90,6 +90,9 @@ def load_mix_var(year, varname, OLDMIX=False):
 
 
 def load_prof_dframe(year):
+    '''
+    Loads the profile data from `year` and returns a DataFrame.
+    '''
     from glob import glob
     fname = (
         MCS_DATA_PATH + f"DATA/{year}/profdata/{year}_*_profiles.npy"
