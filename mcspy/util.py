@@ -15,7 +15,13 @@ __all__ = [
     "profidint_to_profid",
     "make_rowidint",
     "rowidint_to_rowid",
+    "calc_Ls2",
+    "allyearsdec",
 ]
+
+
+def calc_Ls2(Ls, MY):
+    return Ls + 360 * (MY - 28)
 
 
 def local_data_path(pth, ext=""):
@@ -203,3 +209,33 @@ def addext(fn, ext):
     if not fn.endswith(ext):
         return fn + ext
     return fn
+
+
+# decorator for _years functions
+def allyearsdec(f):
+    ays = (
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+    )
+
+    def func(years=None, **kwargs):
+        if years is None:
+            return f(years=ays, **kwargs)
+        else:
+            return f(years=years, **kwargs)
+
+    func.__doc__ = f.__doc__
+    func.__name__ = f.__name__
+    return func
