@@ -301,7 +301,7 @@ def import_downloaded_files(year):
 def sort_mix_data(year):
     _mix = load_mix_dframe(year)
     mix = _mix.sort_values("profidint")
-    if _mix == mix:
+    if (_mix.values == mix.values).all():
         return
     save_mix_dframe(mix)
     for vv in mix_cols:
