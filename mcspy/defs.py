@@ -7,7 +7,6 @@ from configparser import ConfigParser
 
 __all__ = [
     "qday",
-    "qregion",
     "qtempe",
     "qimg",
     "qmarci_mdgm",
@@ -35,11 +34,18 @@ qmarci_mdgm = 'start_time < "2010-07-01" & start_time > "2006-11-08"'
 # approximate time of planet-encircling/global dust storms
 # MY 28 (2007)
 qgds_MY28 = "Ls > 269 & Ls < 300 & MY == 28"
-lxgds_MY28 = lambda Ls2: (Ls2 > 250) & (Ls2 < 300)
+
+
+def lxgds_MY28(Ls2):
+    return (Ls2 > 250) & (Ls2 < 300)
+
 
 # MY 34 (2018)
 qgds_MY34 = "Ls > 185 & Ls < 250 & MY == 34"
-lxgds_MY34 = lambda Ls2: ((Ls2 > 185 + 360 * (34 - 28)) & (Ls2 < 250 + 360 * (34 - 28)))
+
+
+def lxgds_MY34(Ls2):
+    return (Ls2 > 185 + 360 * (34 - 28)) & (Ls2 < 250 + 360 * (34 - 28))
 
 
 def lxday(SZA):
@@ -55,7 +61,9 @@ def lxregion(lat, lon, minlat=-90, minlon=-180, maxlat=90, maxlon=180):
 
 
 def lxtempe(lat, lon):
-    return lxregion(lat, lon, minlat=43.0, minlon=-83.3, maxlat=47.8, maxlon=-70.0)
+    return lxregion(
+        lat, lon, minlat=43.0, minlon=-83.3, maxlat=47.8, maxlon=-70.0
+    )
 
 
 def lxmarci_mdgm(Ls2):
@@ -322,7 +330,9 @@ mix_date_col_lookup = {
 }
 
 mix_date_cols = (
-    ["date", "datetime"] + mix_tab_ref_dt_cols[0::2] + list(mix_date_col_lookup.keys())
+    ["date", "datetime"]
+    + mix_tab_ref_dt_cols[0::2]
+    + list(mix_date_col_lookup.keys())
 )
 
 mix_time_cols = ["UTC"] + mix_tab_ref_dt_cols[1::2]
@@ -498,7 +508,10 @@ mix_descriptions = dict(
         )
     ),
     H2Ovap_qual_description=OrderedDict(
-        ((None, "Water vapor retrieval quality flag."), (9, "9 = not retrieved."),)
+        (
+            (None, "Water vapor retrieval quality flag."),
+            (9, "9 = not retrieved."),
+        )
     ),
     H2Oice_qual_description=OrderedDict(
         (

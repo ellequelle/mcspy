@@ -8,7 +8,6 @@ from .loaders import (
     load_mix_var,
     load_prof_var,
     load_mix_dframe,
-    load_prof_dframe,
 )
 from .util import local_data_path, addext
 from .parsing import load_tab_file
@@ -18,7 +17,7 @@ __all__ = [
     "collect_yearly_vars",
     "find_missing_tab_files",
     "import_downloaded_files",
-    "check_mix_data",
+    "check_index_profiles",
     "sort_prof_data",
     "sort_mix_data",
 ]
@@ -39,7 +38,9 @@ def save_prof_var(var, year, varname):
     """Writes the profile data variable `varname` from `year`, passed
     in the numpy array `var` to the numpy array file "{year}/profdata/
     {year}_{varname}_profiles.npy"."""
-    fname = local_data_path(f"DATA/{year}/profdata/{year}_{varname}_profiles.npy")
+    fname = local_data_path(
+        f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
+    )
     if not exists(dirname(fname)):
         makedirs(dirname(fname))
     with gzip.open(fname, "wb") as fout:
@@ -53,7 +54,9 @@ def _append_mix_dframe(mix):
         return
     year = mix["datetime"].dt.year.unique()
     if year.size > 1:
-        raise ValueError("append_mix_drame only works for data from a single year")
+        raise ValueError(
+            "append_mix_drame only works for data from a single year"
+        )
     year = year[0]
     df = pd.DataFrame()
     _append_mix_dfvars(mix)  # save as individual arrays
@@ -69,7 +72,9 @@ def save_mix_var(var, year, varname):
     """Writes a metadata index variable for `varname` from `year` as
     a numpy array to the numpy array file
     '{year}/indexdata/{year}_{varname}_index.npy'."""
-    fname = local_data_path(f"DATA/{year}/indexdata/{year}_{varname}_index.npy")
+    fname = local_data_path(
+        f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
+    )
     if varname in ["datetime"]:
         var = var.astype(int)
     if not exists(dirname(fname)):
@@ -118,7 +123,9 @@ def _append_prof_var(var, year, varname):
     if len(var) == 0:
         return
     dat = var.reshape((-1, 105))
-    fname = local_data_path(f"DATA/{year}/profdata/{year}_{varname}_profiles.npy")
+    fname = local_data_path(
+        f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
+    )
     # check whether file exists
     if not exists(fname):
         save_prof_var(var, year, varname)
@@ -139,7 +146,9 @@ def _append_mix_var(var, year, varname):
     if len(var) == 0:
         return
     dat = var
-    fname = local_data_path(f"DATA/{year}/indexdata/{year}_{varname}_index.npy")
+    fname = local_data_path(
+        f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
+    )
     # check whether file exists
     if not exists(fname):
         save_mix_var(var, year, varname)
@@ -199,7 +208,9 @@ def find_existing_tab_files(year="*", PATHS=False, ABSOLUTE=False):
     from pathlib import Path
 
     pth = Path(MCS_DATA_PATH) / "DATA"
-    allfiles = list(pth.glob(f"{year}/**/*TAB")) + list(pth.glob(f"{year}/**/*TAB.gz"))
+    allfiles = list(pth.glob(f"{year}/**/*TAB")) + list(
+        pth.glob(f"{year}/**/*TAB.gz")
+    )
     if PATHS:
         if ABSOLUTE:
             return [x.absolute().as_posix() for x in allfiles]
@@ -217,9 +228,13 @@ def _get_missing_prodids(year):
     prodids = pd.Series(find_existing_tab_files()).str[:10]
     prodids = prodids[prodids.str.startswith(str(year))].astype(int)
     mixprodids = pd.Series(
-        pd.unique(np.trunc(load_mix_var(str(year), "profidint") / 1e4).astype(int))
+        pd.unique(
+            np.trunc(load_mix_var(str(year), "profidint") / 1e4).astype(int)
+        )
     )
-    return (prodids.loc[~prodids.isin(mixprodids)].astype(str) + "_DDR.TAB").tolist()
+    return (
+        prodids.loc[~prodids.isin(mixprodids)].astype(str) + "_DDR.TAB"
+    ).tolist()
 
 
 def check_index_profiles(year, raise_for_false=True):
@@ -251,7 +266,9 @@ def check_index_profiles(year, raise_for_false=True):
 
 
 def _get_new_prodids(year):
-    file_prodids = pd.Series(find_existing_tab_files(str(year))).str[:10].astype(int)
+    file_prodids = (
+        pd.Series(find_existing_tab_files(str(year))).str[:10].astype(int)
+    )
     try:
         imported_prodids = pd.Series(
             pd.unique(load_mix_var(year, "profidint") // 10000)
@@ -300,7 +317,7 @@ def sort_prof_data(year):
             continue
         try:
             var = load_prof_var(year, vv)
-        except:
+        except FileNotFoundError:
             continue
         prof = var.flatten()[ix]
         save_prof_var(prof, year, vv)

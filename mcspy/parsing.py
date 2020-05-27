@@ -113,7 +113,8 @@ def parse_tab_file(
     # remove the quality marker row
     dfmd.pop("1")
 
-    # sometimes the none of the profiles are useful, then return empty DataFrames
+    # sometimes the none of the profiles are useful, then
+    # return empty DataFrames
     if len(dfmd) == 0:
         if meta:
             return pd.DataFrame(), pd.DataFrame()
@@ -149,7 +150,9 @@ def parse_tab_file(
 
         # add a column with the profile number (number from the top
         # of the file)
-        prof_num = np.tile(np.array(range(nlen)), (105, 1),).transpose().flatten()
+        prof_num = (
+            np.tile(np.array(range(nlen)), (105, 1),).transpose().flatten()
+        )
         # this file has two bad profiles
         # 2006121500_DDR.TAB 4348 (34230, 15) (34020,)
         dats["prof_num"] = prof_num
@@ -204,6 +207,7 @@ def _read_lists(fn):
     mdlines = lines[::106]  # metadata lines
     # get data lines with profiles separated
     dats = [
-        lines[slice((n * 106 + 1), ((n + 1) * 106))] for n in range(len(lines) // 106)
+        lines[slice((n * 106 + 1), ((n + 1) * 106))]
+        for n in range(len(lines) // 106)
     ]
     return mdlines, dats

@@ -85,7 +85,9 @@ def reload_index(download=False, allow_download=True):
         if exists(MCS_DATA_PATH + "DATA/CUMINDEX.TAB") and not download:
             # if uncompressed version, compress it
             with open(MCS_DATA_PATH + "DATA/CUMINDEX.TAB", "r") as fin:
-                with gzip.open(MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz", "w") as fout:
+                with gzip.open(
+                    MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz", "w"
+                ) as fout:
                     fout.write(fin.read())
         else:
             print("File CUMINDEX.TAB was not found locally.")
@@ -97,9 +99,13 @@ def reload_index(download=False, allow_download=True):
             makedirs(MCS_DATA_PATH, exist_ok=True)
             # if cumulative index is not found, download it from pds
             try:  # with ftp it's easy to find the most recent index
-                get_most_recent_index_ftp(MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz")
+                get_most_recent_index_ftp(
+                    MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz"
+                )
             except Exception:  # fall back on http if ftp doesn't work
-                get_most_recent_index_http(MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz")
+                get_most_recent_index_http(
+                    MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz"
+                )
     # read index file into pandas DataFrame
     dfindex = pd.read_csv(
         MCS_DATA_PATH + "DATA/CUMINDEX.TAB.gz",
@@ -120,7 +126,9 @@ def reload_index(download=False, allow_download=True):
     for cn in ["volume_id", "path", "filename"]:
         dfindex[cn] = dfindex[cn].astype("string")
     # set filename, what I call Product ID, to be the index
-    dfindex = dfindex.set_index("filename", drop=False).rename_axis(index="prodid")
+    dfindex = dfindex.set_index("filename", drop=False).rename_axis(
+        index="prodid"
+    )
     return dfindex
 
 

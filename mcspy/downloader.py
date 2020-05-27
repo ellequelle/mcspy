@@ -42,7 +42,9 @@ def get_tab_files(prodids, dfindex, overwrite=False, use_ftp=False, _pid=""):
         try:
             if use_ftp:
                 get_tab_file_ftp(
-                    PDS_SERVER_PATH + "/" + path, addext(localpath, ".gz"), _pid,
+                    PDS_SERVER_PATH + "/" + path,
+                    addext(localpath, ".gz"),
+                    _pid,
                 )
             else:
                 get_tab_file_http(

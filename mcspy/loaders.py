@@ -84,7 +84,9 @@ def load_mix_var(year, varname, OLDMIX=False, quiet=False):
     '{year}/indexdata/{year}_{varname}_index.npy'.
     """
     if OLDMIX:
-        fname = MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
+        fname = (
+            MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
+        )
         with gzip.open(fname, "rb") as fin:
             var = np.load(fin)
     else:
@@ -136,7 +138,9 @@ def load_prof_var(year, varname, quiet=False):
     # handle pressure separately
     if varname == "pressure" or "varname" == "prs":
         return 610 * np.exp(-0.125 * (np.arange(105) - 9)).reshape((1, 105))
-    fname = MCS_DATA_PATH + f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
+    fname = (
+        MCS_DATA_PATH + f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
+    )
     # load data
     with gzip.open(fname, "rb") as fout:
         var = np.load(fout).reshape((-1, 105))
