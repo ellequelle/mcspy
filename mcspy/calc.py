@@ -47,7 +47,8 @@ def profdiff(var, axis=-1):
     z = np.zeros(dvar.shape[:-1])[..., None] + np.nan
     dvar = np.concatenate((dvar, z), axis=-1)
     return np.moveaxis(dvar, -1, axis)
-    
+
+
 def profddz(altitude, var, axis=-1):
     """
     Find the derivative of `var` with respect to `altitude` along

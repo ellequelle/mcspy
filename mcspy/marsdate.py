@@ -66,16 +66,12 @@ def sol2ls(sol):
     zx0 = xref + e_ellip * np.sin(xref)
     if isscalar(sol):
         while np.abs(zdx) >= 1e-9:
-            zdx = -(zx0 - e_ellip * np.sin(zx0) - xref) / (
-                1.0 - e_ellip * np.cos(zx0)
-            )
+            zdx = -(zx0 - e_ellip * np.sin(zx0) - xref) / (1.0 - e_ellip * np.cos(zx0))
             zx0 = zx0 + zdx
     else:
         lx = np.abs(zdx) >= 1e-9
         while np.any(lx):
-            zdx = -(zx0 - e_ellip * np.sin(zx0) - xref) / (
-                1.0 - e_ellip * np.cos(zx0)
-            )
+            zdx = -(zx0 - e_ellip * np.sin(zx0) - xref) / (1.0 - e_ellip * np.cos(zx0))
             zx0 = zx0 + zdx
             lx = np.abs(zdx) >= 1e-9
     lx = zanom < 0
@@ -114,15 +110,7 @@ def utc2jd(time, scale="utc"):
                 return Time(
                     dict(
                         zip(
-                            (
-                                "year",
-                                "month",
-                                "day",
-                                "hour",
-                                "minute",
-                                "second",
-                            ),
-                            time,
+                            ("year", "month", "day", "hour", "minute", "second",), time,
                         )
                     ),
                     format="ymdhms",
@@ -138,15 +126,7 @@ def utc2jd(time, scale="utc"):
     ):
         d = dict(
             zip(
-                (
-                    "year",
-                    "month",
-                    "day",
-                    "hour",
-                    "minute",
-                    "second",
-                    "microsecond",
-                ),
+                ("year", "month", "day", "hour", "minute", "second", "microsecond",),
                 time,
             )
         )
@@ -275,9 +255,7 @@ def myls2jd(MY, Ls, return_type="float"):
     ref_jdate = 2452383.23
 
     # 1. Find julian date for the (beginning of) chose Mars Year
-    jdate = (MY - ref_MY) * (
-        sols_per_MY * (sec_per_sol / sec_per_day)
-    ) + ref_jdate
+    jdate = (MY - ref_MY) * (sols_per_MY * (sec_per_sol / sec_per_day)) + ref_jdate
 
     # 2. Find the number of martian sols corresponding to
     #    sought Solar Longitude
@@ -384,9 +362,7 @@ def _test_myls_utc(nt=500, plot=True, seed=None):
         results = np.array(utc2myls(utc))
     else:
         utc = myls2utc(*tests)
-        results = np.array(
-            [utc2myls(j) for j in np.transpose(utc)]
-        ).transpose()
+        results = np.array([utc2myls(j) for j in np.transpose(utc)]).transpose()
     diffs = myls2ls(results - tests)
     diffs[diffs > 5] = diffs[diffs > 5] - 360
     diffs[diffs < -5] = 360 + diffs[diffs < -5]
@@ -457,10 +433,7 @@ def load_leapsec(date=None, index="date"):
             if texp < datetime.now() or texp < date:
                 import requests
 
-                lsurl = (
-                    "https://hpiers.obspm.fr/iers/bul/bulc/"
-                    + "Leap_Second.dat"
-                )
+                lsurl = "https://hpiers.obspm.fr/iers/bul/bulc/" + "Leap_Second.dat"
                 print(
                     "Leapsecond table is outdated, attempting to "
                     + "fetch new table..."

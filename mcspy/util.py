@@ -77,9 +77,7 @@ def add_prof_prsnum(prof):
         return prof
     p = prof.copy()
     p.insert(
-        1,
-        "prsnum",
-        (np.log(p["pressure"] / 610) / -0.125 + 10).round().astype(int),
+        1, "prsnum", (np.log(p["pressure"] / 610) / -0.125 + 10).round().astype(int),
     )
     return p
 
@@ -97,9 +95,7 @@ def add_prof_profid(prof):
     if "profid" in prof:
         return prof
     pp = prof.copy()
-    pp["profid"] = (pp["prodid"] + ":" + pp.prof_num.astype(str)).astype(
-        "string"
-    )
+    pp["profid"] = (pp["prodid"] + ":" + pp.prof_num.astype(str)).astype("string")
     return pp
 
 
@@ -150,9 +146,9 @@ def make_profidint(mix):
         mix = mix["profid"]
     elif not isinstance(mix, pd.Series):
         mix = pd.Series(mix)
-    mix = mix.str.slice(None, 10).astype(int) * 10000 + mix.str.slice(
-        19, None
-    ).astype(int)
+    mix = mix.str.slice(None, 10).astype(int) * 10000 + mix.str.slice(19, None).astype(
+        int
+    )
     return mix.values
 
 

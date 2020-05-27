@@ -27,7 +27,7 @@ __all__ = [
 # query strings
 qday = "solar_zen < 90"
 qnight = "LST <= 0.4"
-#qregion = "lat < 50 & lat > 30 & lon > -91 & lon < -60"
+# qregion = "lat < 50 & lat > 30 & lon > -91 & lon < -60"
 qtempe = "lat < 47.8 & lat > 43 & lon > -83.3 & lon < -70"
 qimg = "lat < 70 & lat > 20 & lon > -125 & lon < -60"
 qmarci_mdgm = 'start_time < "2010-07-01" & start_time > "2006-11-08"'
@@ -39,25 +39,27 @@ lxgds_MY28 = lambda Ls2: (Ls2 > 250) & (Ls2 < 300)
 
 # MY 34 (2018)
 qgds_MY34 = "Ls > 185 & Ls < 250 & MY == 34"
-lxgds_MY34 = lambda Ls2: (
-    (Ls2 > 185 + 360 * (34 - 28)) & (Ls2 < 250 + 360 * (34 - 28))
-)
+lxgds_MY34 = lambda Ls2: ((Ls2 > 185 + 360 * (34 - 28)) & (Ls2 < 250 + 360 * (34 - 28)))
 
 
 def lxday(SZA):
     return SZA < 90
+
+
 def lxgds(Ls2):
     return lxgds_MY34(Ls2) | lxgds_MY28(Ls2)
-def lxregion(lat, lon, minlat=-90, minlon=-180,
-             maxlat=90, maxlon=180):
-    return ((lat > minlat) & (lat < maxlat)
-            & (lon > minlon) & (lon < maxlon))
+
+
+def lxregion(lat, lon, minlat=-90, minlon=-180, maxlat=90, maxlon=180):
+    return (lat > minlat) & (lat < maxlat) & (lon > minlon) & (lon < maxlon)
+
+
 def lxtempe(lat, lon):
-    return lxregion(lat, lon, minlat=43.0, minlon=-83.3,
-                        maxlat=47.8, maxlon=-70.0)
+    return lxregion(lat, lon, minlat=43.0, minlon=-83.3, maxlat=47.8, maxlon=-70.0)
+
+
 def lxmarci_mdgm(Ls2):
     return (Ls2 > 132.1) & (Ls2 < 832)
-
 
 
 # default configureation for config file ~/.mcspy
@@ -320,9 +322,7 @@ mix_date_col_lookup = {
 }
 
 mix_date_cols = (
-    ["date", "datetime"]
-    + mix_tab_ref_dt_cols[0::2]
-    + list(mix_date_col_lookup.keys())
+    ["date", "datetime"] + mix_tab_ref_dt_cols[0::2] + list(mix_date_col_lookup.keys())
 )
 
 mix_time_cols = ["UTC"] + mix_tab_ref_dt_cols[1::2]
@@ -498,10 +498,7 @@ mix_descriptions = dict(
         )
     ),
     H2Ovap_qual_description=OrderedDict(
-        (
-            (None, "Water vapor retrieval quality flag."),
-            (9, "9 = not retrieved."),
-        )
+        ((None, "Water vapor retrieval quality flag."), (9, "9 = not retrieved."),)
     ),
     H2Oice_qual_description=OrderedDict(
         (

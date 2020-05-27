@@ -47,17 +47,16 @@ def load_mix_dframe(year, quiet=False):
     with np.load(fname, mmap_mode="c") as _mix:
         mix = pd.DataFrame(dict(_mix.items()))
     if not quiet:
-        print(f'loaded {fname}')
+        print(f"loaded {fname}")
     # mix = pd.DataFrame(mix, columns=mix_cols)
     fname = addext(fn, ".csv.gz")
     # for vv in ['SCLK', 'Ls', 'solar_dist', 'orb_num', 'LST',
     # 'lat', 'lon', 'MY']:
     #    mix[vv] = pd.to_numeric(mix[vv], downcast='float')
     # load the index/profile ID column
-    mix["profid"] = pd.read_csv(fname, squeeze=True,
-                                    header=None, skiprows=1)
+    mix["profid"] = pd.read_csv(fname, squeeze=True, header=None, skiprows=1)
     if not quiet:
-        print(f'loaded {fname}')
+        print(f"loaded {fname}")
     # change time columns back to datetime types
     for cc in ["datetime"]:
         mix[cc] = mix[cc].astype("datetime64[ns]")
@@ -73,7 +72,7 @@ def load_mix_dframe_years(years=None, quiet=False):
     df = pd.DataFrame()
     for yy in years:
         if not quiet:
-            print(f'Loading {yy} index...')
+            print(f"Loading {yy} index...")
         df = df.append(load_mix_dframe(yy))
     return df
 
@@ -85,9 +84,7 @@ def load_mix_var(year, varname, OLDMIX=False, quiet=False):
     '{year}/indexdata/{year}_{varname}_index.npy'.
     """
     if OLDMIX:
-        fname = (
-            MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
-        )
+        fname = MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
         with gzip.open(fname, "rb") as fin:
             var = np.load(fin)
     else:
@@ -122,8 +119,7 @@ def load_prof_dframe(year):
 
 
 @util.allyearsdec
-def load_mix_var_years(years=None, varname="temperature",
-                           quiet=False):
+def load_mix_var_years(years=None, varname="temperature", quiet=False):
     """Loads multiple years of data for the metadata index variable
     `varname` and returns a single 1-D numpy array."""
     dat = []
@@ -140,9 +136,7 @@ def load_prof_var(year, varname, quiet=False):
     # handle pressure separately
     if varname == "pressure" or "varname" == "prs":
         return 610 * np.exp(-0.125 * (np.arange(105) - 9)).reshape((1, 105))
-    fname = (
-        MCS_DATA_PATH + f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
-    )
+    fname = MCS_DATA_PATH + f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
     # load data
     with gzip.open(fname, "rb") as fout:
         var = np.load(fout).reshape((-1, 105))
@@ -152,8 +146,7 @@ def load_prof_var(year, varname, quiet=False):
 
 
 @util.allyearsdec
-def load_prof_var_years(years=None, varname="temperature",
-                            quiet=True):
+def load_prof_var_years(years=None, varname="temperature", quiet=True):
     """Reads the profile data variable `varname` from `years`
     from the numpy array files and returns a single 2-D array.
     If `varname` == "pressure", the returned array is shape (105,1)."""
