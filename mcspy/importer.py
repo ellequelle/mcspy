@@ -287,7 +287,7 @@ def import_downloaded_files(year):
         dfm, dfp = _load_tab_files(pids.tolist())
         if len(dfm) == 0 and len(dfp) == 0:
             continue
-        if len(dfm) != len(dfp)//105:
+        if len(dfm) != len(dfp) // 105:
             raise ValueError("Index and profile data shapes don't match.")
         _append_mix_dframe(dfm)
         _append_prof_df(dfp)
@@ -310,11 +310,11 @@ def sort_mix_data(year):
 
 
 def sort_prof_data(year):
-    rowidint = load_prof_var(year, 'rowidint')
+    rowidint = load_prof_var(year, "rowidint")
     ix = np.argsort(rowidint.flatten()).reshape(-1, 105)
-    save_prof_var(rowidint.flatten()[ix], year, 'rowidint')
+    save_prof_var(rowidint.flatten()[ix], year, "rowidint")
     for vv in prof_cols:
-        if vv == 'rowidint':
+        if vv == "rowidint":
             continue
         try:
             var = load_prof_var(year, vv)
@@ -323,7 +323,7 @@ def sort_prof_data(year):
         prof = var.flatten()[ix]
         save_prof_var(prof, year, vv)
 
-        
+
 def find_missing_tab_files(dfindex):
     """
     List product ID's of any TAB files listed in dfindex that are not available
