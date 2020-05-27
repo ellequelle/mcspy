@@ -4,9 +4,9 @@ from os.path import basename
 import gzip
 import numpy as np
 import pandas as pd
+import mcspy.util as util
 from .util import addext, rowidint_to_rowid
 from .defs import MCS_DATA_PATH
-
 
 __all__ = [
     "load_mix_dframe",
@@ -25,10 +25,17 @@ __all__ = [
     "load_pressure",
     "load_temperature",
     "load_temperature_err",
+    "load_Ls",
+    "load_Ls2",
+    "load_SZA",
+    "load_MY",
+    "load_LST",
+    "load_lat",
+    "load_lon",
 ]
 
 
-def load_mix_dframe(year):
+def load_mix_dframe(year, quiet=False):
     """Load and recreate a metadata index DataFrame from a numpy file
     and a csv file. This function is the opposite of save_mix_dframe.
     returns: the metadata index DataFrame
@@ -39,13 +46,18 @@ def load_mix_dframe(year):
     # load the numeric data and make a new DataFrame
     with np.load(fname, mmap_mode="c") as _mix:
         mix = pd.DataFrame(dict(_mix.items()))
+    if not quiet:
+        print(f'loaded {fname}')
     # mix = pd.DataFrame(mix, columns=mix_cols)
     fname = addext(fn, ".csv.gz")
     # for vv in ['SCLK', 'Ls', 'solar_dist', 'orb_num', 'LST',
     # 'lat', 'lon', 'MY']:
     #    mix[vv] = pd.to_numeric(mix[vv], downcast='float')
     # load the index/profile ID column
-    mix["profid"] = pd.read_csv(fname, squeeze=True, header=None, skiprows=1)
+    mix["profid"] = pd.read_csv(fname, squeeze=True,
+                                    header=None, skiprows=1)
+    if not quiet:
+        print(f'loaded {fname}')
     # change time columns back to datetime types
     for cc in ["datetime"]:
         mix[cc] = mix[cc].astype("datetime64[ns]")
@@ -54,11 +66,14 @@ def load_mix_dframe(year):
     return mix.set_index("profid")
 
 
-def load_mix_dframe_years(years=[2006, 2007, 2008, 2009, 2010]):
+@util.allyearsdec
+def load_mix_dframe_years(years=None, quiet=False):
     """Load the metadata index files for several years and return one
     concatenated DataFrame."""
     df = pd.DataFrame()
     for yy in years:
+        if not quiet:
+            print(f'Loading {yy} index...')
         df = df.append(load_mix_dframe(yy))
     return df
 
@@ -87,7 +102,7 @@ def load_mix_var(year, varname, OLDMIX=False, quiet=False):
     if varname in ["UTC"]:
         var = var.astype("timedelta64[ns]")
     if not quiet:
-        print(f'loaded {fname}')
+        print(f"loaded {fname}")
     return var
 
 
@@ -106,14 +121,14 @@ def load_prof_dframe(year):
     return df.set_index("rowid").sort_values("rowidint")
 
 
-def load_mix_var_years(
-    years=[2006, 2007, 2008, 2009, 2010], varname="temperature"
-):
+@util.allyearsdec
+def load_mix_var_years(years=None, varname="temperature",
+                           quiet=False):
     """Loads multiple years of data for the metadata index variable
     `varname` and returns a single 1-D numpy array."""
     dat = []
     for yy in years:
-        dat.append(load_mix_var(yy, varname))
+        dat.append(load_mix_var(yy, varname, quiet=quiet))
     return np.concatenate(dat, axis=0)
 
 
@@ -136,19 +151,19 @@ def load_prof_var(year, varname, quiet=False):
     return var
 
 
-def load_prof_var_years(
-    years=[2006, 2007, 2008, 2009, 2010], varname="temperature"
-):
+@util.allyearsdec
+def load_prof_var_years(years=None, varname="temperature",
+                            quiet=True):
     """Reads the profile data variable `varname` from `years`
     from the numpy array files and returns a single 2-D array.
     If `varname` == "pressure", the returned array is shape (105,1)."""
     dat = []
     # handle pressure separately
     if varname == "pressure":
-        return load_prof_var(2006, varname)
+        return load_prof_var(2006, varname, quiet)
     # read the data file for each year
     for yy in years:
-        dat.append(load_prof_var(yy, varname))
+        dat.append(load_prof_var(yy, varname, quiet))
     # concatenate the data arrays
     return np.concatenate(dat, axis=0)
 
