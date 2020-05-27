@@ -3,6 +3,7 @@ import numpy as np
 __all__ = [
     "potential_temperature",
     "profdiff",
+    "profddz",
     "logmean",
     "logmedian",
     "logquantile",
@@ -37,7 +38,17 @@ def inf2nan(x, val=np.nan):
     return np.where(np.isinf(x), val, x)
 
 
-def profdiff(altitude, var, axis=-1):
+def profdiff(var, axis=-1):
+    """
+    Find the first order difference of `var` along the axis `axis`.
+    """
+    dvar = np.diff(var, axis=axis)
+    dvar = np.moveaxis(dvar, axis, -1)
+    z = np.zeros(dvar.shape[:-1])[..., None] + np.nan
+    dvar = np.concatenate((dvar, z), axis=-1)
+    return np.moveaxis(dvar, -1, axis)
+    
+def profddz(altitude, var, axis=-1):
     """
     Find the derivative of `var` with respect to `altitude` along
     the axis `axis`.
