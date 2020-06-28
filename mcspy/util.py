@@ -17,6 +17,7 @@ __all__ = [
     "rowidint_to_rowid",
     "calc_Ls2",
     "allyearsdec",
+    "lxload",
 ]
 
 
@@ -239,3 +240,36 @@ def allyearsdec(f):
     func.__doc__ = f.__doc__
     func.__name__ = f.__name__
     return func
+
+
+class lxload(object):
+    def __init__(self, load_var_name, load_var_type="mix"):
+        """
+        load_var_name: the name of the variable to load as an argument.
+        load_var_type: which kind of variable, options: ['mix', 'prof'].
+        """
+        self.varname = load_var_name
+        self.vartype = load_var_type
+
+    def __call__(self, f):
+        def func(*args, **kwargs):
+            if len(args) > 0:
+                return f(*args, **kwargs)
+            elif self.vartype == "mix":
+                from .loaders import load_mix_vars_years
+
+                if isinstance(self.varname, str):
+                    self.varname = [self.varname]
+                var = load_mix_vars_years(
+                    varnames=self.varname, output_tuple=True
+                )
+            elif self.vartype == "prof":
+                from .loaders import load_prof_var_years
+
+                var = [load_prof_var_years(varname=self.varname)]
+            print(var, kwargs)
+            return f(*var, **kwargs)
+
+        func.__name__ = f.__name__
+        func.__doc__ = f.__doc__
+        return func

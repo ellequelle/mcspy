@@ -7,69 +7,130 @@ from .downloader import (
     get_most_recent_index_ftp,
     get_most_recent_index_http,
 )
+from .util import lxload
 import pandas as pd
 from .defs import (
     MCS_DATA_PATH,
     index_columns,
     _index_keep_columns,
-    qmarci_mdgm,
-    qtempe,
-    qday,
-    qimg,
 )
 
 indexing = [
-    "dfidnex",
-    "lxquery",
-    "lxlatrng",
-    "lxlonrng",
-    "lxyear",
-    "lxtempe",
-    "lxday",
-    "lximg",
-    "lxLsN",
+    "dfindex",
+    "lxdfquery",
+    "lxdflatrng",
+    "lxdflonrng",
+    "lxdfyear",
+    "lxdftempe",
+    "lxdfday",
+    "lxdfimg",
+    "lxdfLsN",
     "reload_index",
+    "qday",
+    "qtempe",
+    "qimg",
+    "qmarci_mdgm",
 ]
 
 
+# QUERY STRINGS
+# for indexing using a mix DataFrame
+qday = "solar_zen < 90"
+qnight = "LST <= 0.4"
+qtempe = "lat < 47.8 & lat > 43 & lon > -83.3 & lon < -70"
+qimg = "lat < 70 & lat > 20 & lon > -125 & lon < -60"
+qmarci_mdgm = 'start_time < "2010-07-01" & start_time > "2006-11-08"'
+
+# approximate time of planet-encircling/global dust storms
+# MY 28 (2007)
+qgds_MY28 = "Ls > 269 & Ls < 300 & MY == 28"
+
+# MY 34 (2018)
+qgds_MY34 = "Ls > 185 & Ls < 250 & MY == 34"
+
+
+# VARIABLE-BASED INDEX FUNCTIONS
+# create logical indices based on one or more input variables
+
+
+@lxload("Ls2")
+def lxgds_MY28(Ls2):
+    return (Ls2 > 250) & (Ls2 < 300)
+
+
+@lxload("Ls2")
+def lxgds_MY34(Ls2):
+    return (Ls2 > 185 + 360 * (34 - 28)) & (Ls2 < 250 + 360 * (34 - 28))
+
+
+@lxload("solar_zen")
+def lxday(SZA):
+    return SZA < 90
+
+
+@lxload("Ls2")
+def lxgds(Ls2):
+    return lxgds_MY34(Ls2) | lxgds_MY28(Ls2)
+
+
+@lxload(("lat", "lon"))
+def lxregion(lat, lon, minlat=-90, minlon=-180, maxlat=90, maxlon=180):
+    return (lat > minlat) & (lat < maxlat) & (lon > minlon) & (lon < maxlon)
+
+
+@lxload(("lat", "lon"))
+def lxtempe(lat, lon):
+    return lxregion(
+        lat, lon, minlat=43.0, minlon=-83.3, maxlat=47.8, maxlon=-70.0
+    )
+
+
+@lxload("Ls2")
+def lxmarci_mdgm(Ls2):
+    return (Ls2 > 132.1) & (Ls2 < 832)
+
+
+# MIX INDEXING FUNCTIONS
 # convenience functions for creating logical DataFrame indexes from
 # the metadata index DataFrame
-def lxquery(mix, qstr):
+def lxdfquery(mix, qstr):
     return mix.index.isin(mix.query(qstr).index)
 
 
-def lxmdgm(mix):
-    return lxquery(qmarci_mdgm)
+def lxdfmdgm(mix):
+    return lxdfquery(qmarci_mdgm)
 
 
-def lxlatrng(mix, l0, l1):
-    return lxquery(mix, f"lat > {l0} & lat < {l1}")
+def lxdflatrng(mix, l0, l1):
+    return lxdfquery(mix, f"lat > {l0} & lat < {l1}")
 
 
-def lxlonrng(mix, l0, l1):
-    return lxquery(mix, f"lon > {l0} & lon < {l1}")
+def lxdflonrng(mix, l0, l1):
+    return lxdfquery(mix, f"lon > {l0} & lon < {l1}")
 
 
-def lxyear(mix, yr):
-    return lxquery(mix, f"date > {yr} & date < {yr+1}")
+def lxdfyear(mix, yr):
+    return lxdfquery(mix, f"date > {yr} & date < {yr+1}")
 
 
-def lxtempe(mix):
-    return lxquery(mix, qtempe)
+def lxdftempe(mix):
+    return lxdfquery(mix, qtempe)
 
 
-def lxday(mix):
-    return lxquery(mix, qday)
+def lxdfday(mix):
+    return lxdfquery(mix, qday)
 
 
-def lximg(mix):
-    return lxquery(mix, qimg)
+def lxdfimg(mix):
+    return lxdfquery(mix, qimg)
 
 
-def lxLsN(mix, Ls, N):
-    return lxquery(mix, f"Ls > {Ls} & Ls < {Ls+N}")
+def lxdfLsN(mix, Ls, N):
+    return lxdfquery(mix, f"Ls > {Ls} & Ls < {Ls+N}")
 
 
+# INDEX LOADER
+# to load the index of all data files and orbit numbers
 def reload_index(download=False, allow_download=True):
     """Load the cumulative index file that lists every TAB data
     file in the PDS archive """

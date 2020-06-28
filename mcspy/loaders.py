@@ -15,6 +15,8 @@ __all__ = [
     "load_mix_var_years",
     "load_prof_var",
     "load_prof_var_years",
+    "load_calc_var",
+    "load_calc_var_years",
     "load_H2Oice",
     "load_H2Oice_err",
     "load_H2Ovap",
@@ -105,6 +107,41 @@ def load_mix_var(year, varname, OLDMIX=False, quiet=False):
     return var
 
 
+def load_mix_vars(
+    year, varnames, OLDMIX=False, quiet=False, output_tuple=True
+):
+    """
+    Reads a metadata index variable for `varname` from `year` as a
+    numpy array from the numpy array file
+    '{year}/indexdata/{year}_{varname}_index.npy'.
+    """
+    vars = {}
+    if OLDMIX:
+        print("OLDMIX only works with load_mix_var.")
+        return {}
+    else:
+        try:
+            fname = MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_mixvars.npz"
+            with np.load(fname, allow_pickle=False) as fin:
+                for name in varnames:
+                    vars[name] = fin[name]
+        except KeyError as e:
+            print(e)
+            return
+            for name in varnames:
+                vars[name] = load_mix_var(year, name, True)
+    for name in varnames:
+        if name in ["date", "datetime"] or "date" in name.lower():
+            vars[name] = vars[name].astype("datetime64[ns]")
+        if name in ["UTC"]:
+            vars[name] = vars[name].astype("timedelta64[ns]")
+    if not quiet:
+        print(f"loaded {fname}")
+    if output_tuple:
+        return tuple(vars.values())
+    return vars
+
+
 def load_prof_dframe(year):
     """
     Loads the profile data from `year` and returns a DataFrame.
@@ -121,13 +158,32 @@ def load_prof_dframe(year):
 
 
 @util.allyearsdec
-def load_mix_var_years(years=None, varname="temperature", quiet=False):
+def load_mix_var_years(years=None, varname="Ls", quiet=False):
     """Loads multiple years of data for the metadata index variable
     `varname` and returns a single 1-D numpy array."""
     dat = []
     for yy in years:
         dat.append(load_mix_var(yy, varname, quiet=quiet))
     return np.concatenate(dat, axis=0)
+
+
+@util.allyearsdec
+def load_mix_vars_years(
+    years=None, varnames=["Ls"], quiet=False, output_tuple=False
+):
+    """Loads multiple years of data for the metadata index variable
+    `varname` and returns a single 1-D numpy array."""
+    dat = {}
+    for yy in years:
+        odat = load_mix_vars(yy, varnames, quiet=quiet, output_tuple=False)
+        for name in varnames:
+            dat.setdefault(name, [])
+            dat[name].append(odat[name])
+    for name in varnames:
+        dat[name] = np.concatenate(dat[name], axis=0)
+    if output_tuple:
+        return tuple(dat.values())
+    return dat
 
 
 def load_prof_var(year, varname, quiet=False):
@@ -149,18 +205,57 @@ def load_prof_var(year, varname, quiet=False):
     return var
 
 
+def load_calc_var(year, varname, quiet=False):
+    """Reads the calculated profile variable `varname` from `year` from the
+    numpy array file "{year}/calcdata/{year}_{varname}_profiles.npy" and
+    returns a single 2-D array. If `varname` == "pressure", the returned array
+    is shape (105,1)."""
+    # handle pressure separately
+    if varname == "pressure" or "varname" == "prs":
+        return 610 * np.exp(-0.125 * (np.arange(105) - 9)).reshape((1, 105))
+    fname = (
+        MCS_DATA_PATH + f"DATA/{year}/calcdata/{year}_{varname}_profiles.npy"
+    )
+    # load data
+    with gzip.open(fname, "rb") as fout:
+        var = np.load(fout).reshape((-1, 105))
+    if not quiet:
+        print(f"loaded {fname}")
+    return var
+
+
 @util.allyearsdec
-def load_prof_var_years(years=None, varname="temperature", quiet=True):
+def load_prof_var_years(years=None, varname="temperature", quiet=False):
     """Reads the profile data variable `varname` from `years`
     from the numpy array files and returns a single 2-D array.
     If `varname` == "pressure", the returned array is shape (105,1)."""
     dat = []
+    if not quiet:
+        print(f"Loading {varname}...")
     # handle pressure separately
     if varname == "pressure":
         return load_prof_var(2006, varname, quiet)
     # read the data file for each year
     for yy in years:
         dat.append(load_prof_var(yy, varname, quiet))
+    # concatenate the data arrays
+    return np.concatenate(dat, axis=0)
+
+
+@util.allyearsdec
+def load_calc_var_years(years=None, varname="temperature", quiet=False):
+    """Reads the calculated profile variable `varname` from `years`
+    from the numpy array files and returns a single 2-D array.
+    If `varname` == "pressure", the returned array is shape (105,1)."""
+    dat = []
+    if not quiet:
+        print(f"Loading {varname}...")
+    # handle pressure separately
+    if varname == "pressure":
+        return load_calc_var(2006, varname, quiet)
+    # read the data file for each year
+    for yy in years:
+        dat.append(load_calc_var(yy, varname, quiet))
     # concatenate the data arrays
     return np.concatenate(dat, axis=0)
 

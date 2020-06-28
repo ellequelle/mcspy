@@ -6,10 +6,6 @@ from collections import OrderedDict
 from configparser import ConfigParser
 
 __all__ = [
-    "qday",
-    "qtempe",
-    "qimg",
-    "qmarci_mdgm",
     "MCS_DATA_PATH",
     "header_columns",
     "index_columns",
@@ -21,53 +17,6 @@ __all__ = [
     "set_config",
     # "allmcsyears",
 ]
-
-
-# query strings
-qday = "solar_zen < 90"
-qnight = "LST <= 0.4"
-# qregion = "lat < 50 & lat > 30 & lon > -91 & lon < -60"
-qtempe = "lat < 47.8 & lat > 43 & lon > -83.3 & lon < -70"
-qimg = "lat < 70 & lat > 20 & lon > -125 & lon < -60"
-qmarci_mdgm = 'start_time < "2010-07-01" & start_time > "2006-11-08"'
-
-# approximate time of planet-encircling/global dust storms
-# MY 28 (2007)
-qgds_MY28 = "Ls > 269 & Ls < 300 & MY == 28"
-
-
-def lxgds_MY28(Ls2):
-    return (Ls2 > 250) & (Ls2 < 300)
-
-
-# MY 34 (2018)
-qgds_MY34 = "Ls > 185 & Ls < 250 & MY == 34"
-
-
-def lxgds_MY34(Ls2):
-    return (Ls2 > 185 + 360 * (34 - 28)) & (Ls2 < 250 + 360 * (34 - 28))
-
-
-def lxday(SZA):
-    return SZA < 90
-
-
-def lxgds(Ls2):
-    return lxgds_MY34(Ls2) | lxgds_MY28(Ls2)
-
-
-def lxregion(lat, lon, minlat=-90, minlon=-180, maxlat=90, maxlon=180):
-    return (lat > minlat) & (lat < maxlat) & (lon > minlon) & (lon < maxlon)
-
-
-def lxtempe(lat, lon):
-    return lxregion(
-        lat, lon, minlat=43.0, minlon=-83.3, maxlat=47.8, maxlon=-70.0
-    )
-
-
-def lxmarci_mdgm(Ls2):
-    return (Ls2 > 132.1) & (Ls2 < 832)
 
 
 # default configureation for config file ~/.mcspy

@@ -42,10 +42,15 @@ def profdiff(var, axis=-1):
     """
     Find the first order difference of `var` along the axis `axis`.
     """
+    # calculate the difference (along axis)
     dvar = np.diff(var, axis=axis)
+    # move difference axis to the last position
     dvar = np.moveaxis(dvar, axis, -1)
+    # make an array of nans to append on dvar
     z = np.zeros(dvar.shape[:-1])[..., None] + np.nan
+    # concatenate arrays so (output.shape == input.shape).all()
     dvar = np.concatenate((dvar, z), axis=-1)
+    # finally, move axis back to its original position
     return np.moveaxis(dvar, -1, axis)
 
 
