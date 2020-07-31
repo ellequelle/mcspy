@@ -79,7 +79,7 @@ def load_mix_dframe_years(years=None, quiet=False):
     return df
 
 
-def load_mix_var(year, varname, OLDMIX=False, quiet=False):
+def load_mix_var(year, varname, mixfile_path=None, OLDMIX=False, quiet=False):
     """
     Reads a metadata index variable for `varname` from `year` as a
     numpy array from the numpy array file
@@ -93,11 +93,17 @@ def load_mix_var(year, varname, OLDMIX=False, quiet=False):
             var = np.load(fin)
     else:
         try:
-            fname = MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_mixvars.npz"
+            if mixfile_path is not None:
+                fname = mixfile_path
+            else:
+                fname = MCS_DATA_PATH + f"DATA/{year}/indexdata/{year}_mixvars.npz"
             with np.load(fname, allow_pickle=False) as fin:
+                print("Loading from {fname}")
                 var = fin[varname]
         except KeyError:
+            print("Can't load mix archive, falling back to .npy file")
             var = load_mix_var(year, varname, True)
+
     if varname in ["date", "datetime"] or "date" in varname.lower():
         var = var.astype("datetime64[ns]")
     if varname in ["UTC"]:

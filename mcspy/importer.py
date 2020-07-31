@@ -1,7 +1,8 @@
 __package__ = "mcspy"
-import gzip
-from os import makedirs
-from os.path import exists, dirname
+import gzip as _gzip
+from os import makedirs as _makedirs
+from os.path import exists as _exists, dirname as _dirname
+from pathlib import Path as _Path
 import numpy as np
 import pandas as pd
 from .loaders import (
@@ -10,7 +11,6 @@ from .loaders import (
     load_mix_dframe,
 )
 from .util import local_data_path, addext
-from .parsing import load_tab_file
 from .defs import mix_cols, prof_cols, MCS_DATA_PATH
 
 __all__ = [
@@ -30,7 +30,7 @@ _others = [
     "_append_prof_var",
     "_append_mix_var",
     "_append_prof_df",
-    "_load_tab_files",
+    "_load_tab_files_int",
 ]
 
 
@@ -41,9 +41,9 @@ def save_prof_var(var, year, varname):
     fname = local_data_path(
         f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
     )
-    if not exists(dirname(fname)):
-        makedirs(dirname(fname))
-    with gzip.open(fname, "wb") as fout:
+    if not _exists(_dirname(fname)):
+        _makedirs(_dirname(fname))
+    with _gzip.open(fname, "wb") as fout:
         np.save(fout, var, False)
     print(f"wrote {fname}")
 
@@ -61,7 +61,7 @@ def _append_mix_dframe(mix):
     df = pd.DataFrame()
     _append_mix_dfvars(mix)  # save as individual arrays
     fn = local_data_path(f"DATA/{year}/indexdata/{year}_mixvars")
-    if exists(addext(fn, ".npz")) and exists(addext(fn, ".csv.gz")):
+    if _exists(addext(fn, ".npz")) and _exists(addext(fn, ".csv.gz")):
         df = load_mix_dframe(year)
     else:
         df = pd.DataFrame()
@@ -77,21 +77,29 @@ def save_mix_var(var, year, varname):
     )
     if varname in ["datetime"]:
         var = var.astype(int)
-    if not exists(dirname(fname)):
-        makedirs(dirname(fname))
-    with gzip.open(fname, "wb") as fout:
+    if not _exists(_dirname(fname)):
+        _makedirs(_dirname(fname))
+    with _gzip.open(fname, "wb") as fout:
         np.save(fout, var, False)
     print(f"wrote {fname}")
 
 
-def save_mix_dframe(mix):
+def save_mix_dframe(mix, save_path=None):
     """Save a metadata index DataFrame to a numpy file (numeric data)
     and a csv file (non-numeric data). This function saves one
-    DataFrame per earth year."""
+    DataFrame per earth year.
+    save_path (optional): path to save mix files. When None, files are saved to {MCS_DATA_PATH}/DATA/{year}/indexdata/{year}_mixvars.
+    """
     mix = mix.copy()
     mix = mix.reset_index()  # index becomes "profid" column
     year = mix["profid"].str.slice(None, 4).iloc[0]
-    fn = local_data_path(f"DATA/{year}/indexdata/{year}_mixvars")
+    if save_path is None:
+        fn = local_data_path(f"DATA/{year}/indexdata/{year}_mixvars")
+    else:
+        fn = save_path
+        if _Path(fn).is_dir() or fn[-1] == "/":
+            fn = f"{fn}/mixvars"
+
     # drop product ID
     if "prodid" in mix:
         mix = mix.drop(columns=["prodid"])
@@ -127,7 +135,7 @@ def _append_prof_var(var, year, varname):
         f"DATA/{year}/profdata/{year}_{varname}_profiles.npy"
     )
     # check whether file exists
-    if not exists(fname):
+    if not _exists(fname):
         save_prof_var(var, year, varname)
     else:
         # concatenate new and existing data arrays
@@ -150,7 +158,7 @@ def _append_mix_var(var, year, varname):
         f"DATA/{year}/indexdata/{year}_{varname}_index.npy"
     )
     # check whether file exists
-    if not exists(fname):
+    if not _exists(fname):
         save_mix_var(var, year, varname)
     else:
         # concatenate new and existing data arrays
@@ -205,9 +213,7 @@ def find_existing_tab_files(year="*", PATHS=False, ABSOLUTE=False):
     ABSOLUTE: return the absolute file paths (if False, returns paths
         relative to MCS_DATA_PATH). Ignored if PATHS is false.
     """
-    from pathlib import Path
-
-    pth = Path(MCS_DATA_PATH) / "DATA"
+    pth = _Path(MCS_DATA_PATH) / "DATA"
     allfiles = list(pth.glob(f"{year}/**/*TAB")) + list(
         pth.glob(f"{year}/**/*TAB.gz")
     )
@@ -283,7 +289,7 @@ def import_downloaded_files(year):
     ymms = (new_prodids // 1000).unique()
     for ym in ymms:
         pids = new_prodids[new_prodids // 1000 == ym].astype(str) + "_DDR.TAB"
-        dfm, dfp = _load_tab_files(pids.tolist())
+        dfm, dfp = _load_tab_files_int(pids.tolist())
         if len(dfm) == 0 and len(dfp) == 0:
             continue
         if len(dfm) != len(dfp) // 105:
@@ -329,7 +335,6 @@ def find_missing_tab_files(dfindex):
     locally.
     """
     from os import stat
-    from os.path import exists
     from .util import mcs_tab_path
 
     missing_prodids = []
@@ -337,9 +342,9 @@ def find_missing_tab_files(dfindex):
     for prodid in dfindex.index:
         fn = mcs_tab_path(prodid, dfindex, absolute=True)
         tf = False  # assume does not exist
-        if not exists(fn):  # try both .TAB and .TAB.gz
+        if not _exists(fn):  # try both .TAB and .TAB.gz
             fn = fn + ".gz"
-        if exists(fn):  # this should be the correct name if it exists
+        if _exists(fn):  # this should be the correct name if it exists
             tf = stat(fn).st_size > 5e3  # make sure it's a reasonable size
         if not tf:  # if it does not exist or is unreasonably small
             missing_prodids.append(prodid)  # add file to missing list
@@ -372,14 +377,15 @@ def collect_yearly_vars(dfindex, MIX=True, PROF=True):
     ).unique()
     for ym in ymms:
         dfi = dfindex.loc[dfindex.index.str.startswith(ym.astype(str))]
-        dfmix, dfprof = _load_tab_files(dfi.index, dfindex, MIX=MIX, PROF=PROF)
+        dfmix, dfprof = _load_tab_files_int(dfi.index, dfindex, MIX=MIX, PROF=PROF)
         if MIX:
             _append_mix_dframe(dfmix)
         if PROF:
             _append_prof_df(dfprof)
 
 
-def _load_tab_files(prodids, dfindex=None, MIX=True, PROF=True):
+def _load_tab_files_int(prodids, dfindex=None, MIX=True, PROF=True):
+    from .parsing import load_tab_file
     dfmix = []
     dfprof = []
     dfmix = pd.DataFrame()

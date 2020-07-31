@@ -30,6 +30,7 @@ from .loaders import (
     load_LST,
     load_lat,
     load_lon,
+    load_Ls2,
 )
 from .indexing import (
     qday,
